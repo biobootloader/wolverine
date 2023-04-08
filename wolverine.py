@@ -1,4 +1,3 @@
-import argparse
 import difflib
 import fire
 import json
