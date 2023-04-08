@@ -11,8 +11,8 @@ For a quick demonstration see my [demo video on twitter](https://twitter.com/bio
 ## Setup
 
     python3 -m venv venv
-    pip install -r requirements.txt
     source venv/bin/activate
+    pip install -r requirements.txt
 
 Add your openAI api key to `openai_key.txt` - _warning!_ by default this uses GPT-4 and may make many repeated calls to the api.
 
