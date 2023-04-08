@@ -1,3 +1,4 @@
+import argparse
 import difflib
 import json
 import os
@@ -23,7 +24,7 @@ def run_script(script_name, *args):
     return result.decode("utf-8"), 0
 
 
-def send_error_to_gpt4(file_path, args, error_message):
+def send_error_to_gpt(file_path, args, error_message, model_name):
     with open(file_path, "r") as f:
         file_lines = f.readlines()
 
@@ -51,8 +52,7 @@ def send_error_to_gpt4(file_path, args, error_message):
     # print(prompt)
 
     response = openai.ChatCompletion.create(
-        # model="gpt-3.5-turbo",
-        model="gpt-4",
+        model=model_name,
         messages=[
             {
                 "role": "user",
@@ -114,15 +114,19 @@ def apply_changes(file_path, changes_json):
 
 
 def main():
-    if len(sys.argv) < 3:
-        print("Usage: wolverine.py <script_name> <arg1> <arg2> ... [--revert]")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description="A script to fix Python code using GPT.")
+    parser.add_argument("script_name", help="The name of the script to fix.")
+    parser.add_argument("args", nargs="*", help="The arguments for the script.")
+    parser.add_argument("--model", default="gpt-4", help="The model to use (default: gpt-4).")
+    parser.add_argument("--revert", action="store_true", help="Revert changes to the script.")
 
-    script_name = sys.argv[1]
-    args = sys.argv[2:]
+    args = parser.parse_args()
+
+    script_name = args.script_name
+    script_args = args.args
 
     # Revert changes if requested
-    if "--revert" in args:
+    if args.revert:
         backup_file = script_name + ".bak"
         if os.path.exists(backup_file):
             shutil.copy(backup_file, script_name)
@@ -136,7 +140,7 @@ def main():
     shutil.copy(script_name, script_name + ".bak")
 
     while True:
-        output, returncode = run_script(script_name, *args)
+        output, returncode = run_script(script_name, *script_args)
 
         if returncode == 0:
             cprint("Script ran successfully.", "blue")
@@ -146,7 +150,7 @@ def main():
             cprint("Script crashed. Trying to fix...", "blue")
             print("Output:", output)
 
-            json_response = send_error_to_gpt4(script_name, args, output)
+            json_response = send_error_to_gpt(script_name, script_args, output, args.model)
             apply_changes(script_name, json_response)
             cprint("Changes applied. Rerunning...", "blue")
 
