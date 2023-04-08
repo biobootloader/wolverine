@@ -1,4 +1,5 @@
 import difflib
+import fire
 import json
 import os
 import shutil
@@ -13,17 +14,18 @@ with open("openai_key.txt") as f:
     openai.api_key = f.read().strip()
 
 
-def run_script(script_name, *args):
+def run_script(script_name, script_args):
+    script_args = [str(arg) for arg in script_args]
     try:
         result = subprocess.check_output(
-            [sys.executable, script_name, *args], stderr=subprocess.STDOUT
+            [sys.executable, script_name, *script_args], stderr=subprocess.STDOUT
         )
     except subprocess.CalledProcessError as e:
         return e.output.decode("utf-8"), e.returncode
     return result.decode("utf-8"), 0
 
 
-def send_error_to_gpt4(file_path, args, error_message):
+def send_error_to_gpt4(file_path, args, error_message, model):
     with open(file_path, "r") as f:
         file_lines = f.readlines()
 
@@ -51,8 +53,7 @@ def send_error_to_gpt4(file_path, args, error_message):
     # print(prompt)
 
     response = openai.ChatCompletion.create(
-        # model="gpt-3.5-turbo",
-        model="gpt-4",
+        model=model,
         messages=[
             {
                 "role": "user",
@@ -113,16 +114,13 @@ def apply_changes(file_path, changes_json):
             print(line, end="")
 
 
-def main():
-    if len(sys.argv) < 3:
-        print("Usage: wolverine.py <script_name> <arg1> <arg2> ... [--revert]")
-        sys.exit(1)
-
-    script_name = sys.argv[1]
-    args = sys.argv[2:]
+def main(script_name, *script_args, revert=False, model="gpt-4"):
+    # if len(sys.argv) < 3:
+    #     print("Usage: python wolverine.py <script_name> <arg1> <arg2> ... [--revert]")
+    #     sys.exit(1)
 
     # Revert changes if requested
-    if "--revert" in args:
+    if revert:
         backup_file = script_name + ".bak"
         if os.path.exists(backup_file):
             shutil.copy(backup_file, script_name)
@@ -136,7 +134,7 @@ def main():
     shutil.copy(script_name, script_name + ".bak")
 
     while True:
-        output, returncode = run_script(script_name, *args)
+        output, returncode = run_script(script_name, script_args)
 
         if returncode == 0:
             cprint("Script ran successfully.", "blue")
@@ -146,10 +144,15 @@ def main():
             cprint("Script crashed. Trying to fix...", "blue")
             print("Output:", output)
 
-            json_response = send_error_to_gpt4(script_name, args, output)
+            json_response = send_error_to_gpt4(
+                    file_path=script_name,
+                    args=script_args,
+                    error_message=output,
+                    model=model,
+            )
             apply_changes(script_name, json_response)
             cprint("Changes applied. Rerunning...", "blue")
 
 
 if __name__ == "__main__":
-    main()
+    fire.Fire(main)
