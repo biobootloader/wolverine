@@ -25,7 +25,7 @@ def run_script(script_name, script_args):
     return result.decode("utf-8"), 0
 
 
-def send_error_to_gpt4(file_path, args, error_message, model):
+def send_error_to_gpt(file_path, args, error_message, model):
     with open(file_path, "r") as f:
         file_lines = f.readlines()
 
@@ -115,11 +115,6 @@ def apply_changes(file_path, changes_json):
 
 
 def main(script_name, *script_args, revert=False, model="gpt-4"):
-    # if len(sys.argv) < 3:
-    #     print("Usage: python wolverine.py <script_name> <arg1> <arg2> ... [--revert]")
-    #     sys.exit(1)
-
-    # Revert changes if requested
     if revert:
         backup_file = script_name + ".bak"
         if os.path.exists(backup_file):
@@ -144,7 +139,7 @@ def main(script_name, *script_args, revert=False, model="gpt-4"):
             cprint("Script crashed. Trying to fix...", "blue")
             print("Output:", output)
 
-            json_response = send_error_to_gpt4(
+            json_response = send_error_to_gpt(
                     file_path=script_name,
                     args=script_args,
                     error_message=output,
