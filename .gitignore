@@ -1,2 +1,4 @@
 venv
 openai_key.txt
+.venv
+.env

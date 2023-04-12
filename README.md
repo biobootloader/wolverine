@@ -13,8 +13,11 @@ For a quick demonstration see my [demo video on twitter](https://twitter.com/bio
     python3 -m venv venv
     source venv/bin/activate
     pip install -r requirements.txt
+    cp .env.sample .env
 
-Add your openAI api key to `openai_key.txt` - _warning!_ by default this uses GPT-4 and may make many repeated calls to the api.
+Add your openAI api key to `.env` 
+
+_warning!_ By default wolverine uses GPT-4 and may make many repeated calls to the api.
 
 ## Example Usage
 
