@@ -20,7 +20,7 @@ Add your openAI api key to `openai_key.txt` - _warning!_ by default this uses GP
 
 To run with gpt-4 (the default, tested option):
 
-    python wolverine.py buggy_script.py "subtract" 20 3
+    python wolverine.py examples/buggy_script.py "subtract" 20 3
 
 You can also run with other models, but be warned they may not adhere to the edit format as well:
 
