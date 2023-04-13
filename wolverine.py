@@ -113,17 +113,13 @@ def apply_changes(file_path, changes_json):
             print(line, end="")
 
 def avaibility(openaiObj):
-    models_available = [x['id'] for x in openai.Model.list()['data']]
-    if "gpt-4" not in models_available:
+    if "gpt-4" not in [x['id'] for x in openai.Model.list()['data']]:
         model = "gpt-3.5-turbo"
     else:
         model = "gpt-4"
     return model
 
-
-
-def main(script_name, *script_args, revert=False):
-    model = avaibility(openai)
+def main(script_name, *script_args, revert=False, model=avaibility(openai)):
     if revert:
         backup_file = script_name + ".bak"
         if os.path.exists(backup_file):
