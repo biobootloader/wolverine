@@ -13,7 +13,6 @@ from termcolor import cprint
 with open("openai_key.txt") as f:
     openai.api_key = f.read().strip()
 
-
 def run_script(script_name, script_args):
     script_args = [str(arg) for arg in script_args]
     try:
@@ -113,8 +112,18 @@ def apply_changes(file_path, changes_json):
         else:
             print(line, end="")
 
+def avaibility(openaiObj):
+    models_available = [x['id'] for x in openai.Model.list()['data']]
+    if "gpt-4" not in models_available:
+        model = "gpt-3.5-turbo"
+    else:
+        model = "gpt-4"
+    return model
 
-def main(script_name, *script_args, revert=False, model="gpt-4"):
+
+
+def main(script_name, *script_args, revert=False):
+    model = avaibility(openai)
     if revert:
         backup_file = script_name + ".bak"
         if os.path.exists(backup_file):
@@ -135,10 +144,10 @@ def main(script_name, *script_args, revert=False, model="gpt-4"):
             cprint("Script ran successfully.", "blue")
             print("Output:", output)
             break
+
         else:
             cprint("Script crashed. Trying to fix...", "blue")
             print("Output:", output)
-
             json_response = send_error_to_gpt(
                     file_path=script_name,
                     args=script_args,
@@ -151,3 +160,4 @@ def main(script_name, *script_args, revert=False, model="gpt-4"):
 
 if __name__ == "__main__":
     fire.Fire(main)
+
