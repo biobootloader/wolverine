@@ -6,12 +6,22 @@ import shutil
 import subprocess
 import sys
 import openai
+import logging
 from termcolor import cprint
 
 # Load the OpenAI API key
 def load_openai_key():
     with open("openai_key.txt") as f:
         return f.read().strip()
+    
+# Set up logging
+def configure_logging():
+    logging.basicConfig(
+        filename="wolverine.log",
+        format="%(asctime)s - %(levelname)s - %(message)s",
+        level=logging.INFO,
+    )
+
 
 # Run the provided script and return the output and return code
 def run_script(script_name, script_args):
@@ -134,8 +144,10 @@ def apply_change_interactive(file_path, change):
         if decision == "y":
             with open(file_path, "w") as f:
                 f.writelines(file_lines)
+            logging.info(f"Applied change: {change}")
             return True
         elif decision == "n":
+            logging.info(f"Rejected change: {change}")
             return False
         else:
             print("Invalid input. Please enter 'y' or 'n'.")
@@ -172,9 +184,11 @@ def main(script_name, *script_args, revert=False, model="gpt-4", interactive=Fal
         if returncode == 0:
             cprint("Script ran successfully.", "blue")
             print("Output:", output)
+            logging.info("Script ran successfully.")
             break
         else:
             cprint("Script crashed. Trying to fix...", "blue")
+            logging.error(f"Script crashed with return code {returncode}.")
             print("Output:", output)
 
             json_response = send_error_to_gpt(
@@ -196,17 +210,21 @@ def main(script_name, *script_args, revert=False, model="gpt-4", interactive=Fal
                     else:
                         cprint("Change rejected.", "red")
                 cprint("Finished applying changes. Rerunning...", "blue")
+                logging.info("Finished applying changes in interactive mode.")
             else:
                 try:
                     apply_changes(script_name, json_response)
                     cprint("Changes applied. Rerunning...", "blue")
+                    logging.info("Changes applied.")
                 except Exception as e:
                     raise Exception(f"Failed to fix the script: {str(e)}")
 
 if __name__ == "__main__":
+    configure_logging()
     try:
         fire.Fire(main)
     except Exception as e:
         print(str(e))
+        logging.error(f"Error: {str(e)}")
         sys.exit(1)
 
