@@ -5,15 +5,15 @@ import os
 import shutil
 import subprocess
 import sys
-
 import openai
 from termcolor import cprint
 
-# Set up the OpenAI API
-with open("openai_key.txt") as f:
-    openai.api_key = f.read().strip()
+# Load the OpenAI API key
+def load_openai_key():
+    with open("openai_key.txt") as f:
+        return f.read().strip()
 
-
+# Run the provided script and return the output and return code
 def run_script(script_name, script_args):
     script_args = [str(arg) for arg in script_args]
     try:
@@ -24,8 +24,8 @@ def run_script(script_name, script_args):
         return e.output.decode("utf-8"), e.returncode
     return result.decode("utf-8"), 0
 
-
-def send_error_to_gpt(file_path, args, error_message, model):
+# Send the error to GPT and receive suggestions
+def send_error_to_gpt(file_path, args, error_message, model, prompt_length_limit=4096):
     with open(file_path, "r") as f:
         file_lines = f.readlines()
 
@@ -50,7 +50,9 @@ def send_error_to_gpt(file_path, args, error_message, model):
         "exact format as described above."
     )
 
-    # print(prompt)
+    # Truncate the prompt if it exceeds the limit
+    if len(prompt) > prompt_length_limit:
+        prompt = prompt[:prompt_length_limit]
 
     response = openai.ChatCompletion.create(
         model=model,
@@ -65,45 +67,50 @@ def send_error_to_gpt(file_path, args, error_message, model):
 
     return response.choices[0].message.content.strip()
 
-
+# Apply the changes suggested by GPT
 def apply_changes(file_path, changes_json):
-    with open(file_path, "r") as f:
-        original_file_lines = f.readlines()
+    try:
+        with open(file_path, "r") as f:
+            original_file_lines = f.readlines()
 
-    changes = json.loads(changes_json)
+        changes = json.loads(changes_json)
 
-    # Filter out explanation elements
-    operation_changes = [change for change in changes if "operation" in change]
-    explanations = [
-        change["explanation"] for change in changes if "explanation" in change
-    ]
+        operation_changes = [change for change in changes if "operation" in change]
+        explanations = [
+            change["explanation"] for change in changes if "explanation" in change
+        ]
 
-    # Sort the changes in reverse line order
-    operation_changes.sort(key=lambda x: x["line"], reverse=True)
+        operation_changes.sort(key=lambda x: x["line"], reverse=True)
 
-    file_lines = original_file_lines.copy()
-    for change in operation_changes:
-        operation = change["operation"]
-        line = change["line"]
-        content = change["content"]
+        file_lines = original_file_lines.copy()
+        for change in operation_changes:
+            operation = change["operation"]
+            line = change["line"]
+            content = change["content"]
 
-        if operation == "Replace":
-            file_lines[line - 1] = content + "\n"
-        elif operation == "Delete":
-            del file_lines[line - 1]
-        elif operation == "InsertAfter":
-            file_lines.insert(line, content + "\n")
+            if operation == "Replace":
+                file_lines[line - 1] = content + "\n"
+            elif operation == "Delete":
+                del file_lines[line - 1]
+            elif operation == "InsertAfter":
+                file_lines.insert(line, content + "\n")
 
-    with open(file_path, "w") as f:
-        f.writelines(file_lines)
+        with open(file_path, "w") as f:
+            f.writelines(file_lines)
 
-    # Print explanations
-    cprint("Explanations:", "blue")
-    for explanation in explanations:
-        cprint(f"- {explanation}", "blue")
+        # Print explanations
+        cprint("Explanations:", "blue")
+        for explanation in explanations:
+            cprint(f"- {explanation}", "blue")
 
-    # Show the diff
-    print("\nChanges:")
+        # Show the diff
+        print("\nChanges:")
+        print_diff(original_file_lines, file_lines)
+    except Exception as e:
+        raise Exception(f"Failed to apply changes: {str(e)}")
+
+# Print the differences between two file contents
+def print_diff(original_file_lines, file_lines):
     diff = difflib.unified_diff(original_file_lines, file_lines, lineterm="")
     for line in diff:
         if line.startswith("+"):
@@ -113,17 +120,17 @@ def apply_changes(file_path, changes_json):
         else:
             print(line, end="")
 
-
 def main(script_name, *script_args, revert=False, model="gpt-4"):
+    openai.api_key = load_openai_key()
+
     if revert:
         backup_file = script_name + ".bak"
         if os.path.exists(backup_file):
             shutil.copy(backup_file, script_name)
             print(f"Reverted changes to {script_name}")
-            sys.exit(0)
+            return
         else:
-            print(f"No backup file found for {script_name}")
-            sys.exit(1)
+            raise Exception(f"No backup file found for {script_name}")
 
     # Make a backup of the original script
     shutil.copy(script_name, script_name + ".bak")
@@ -145,9 +152,16 @@ def main(script_name, *script_args, revert=False, model="gpt-4"):
                     error_message=output,
                     model=model,
             )
-            apply_changes(script_name, json_response)
-            cprint("Changes applied. Rerunning...", "blue")
-
+            try:
+                apply_changes(script_name, json_response)
+                cprint("Changes applied. Rerunning...", "blue")
+            except Exception as e:
+                raise Exception(f"Failed to fix the script: {str(e)}")
 
 if __name__ == "__main__":
-    fire.Fire(main)
+    try:
+        fire.Fire(main)
+    except Exception as e:
+        print(str(e))
+        sys.exit(1)
+
