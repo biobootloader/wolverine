@@ -32,7 +32,7 @@ This is just a quick prototype I threw together in a few hours. There are many p
 
 - add flags to customize usage, such as asking for user confirmation before running changed code
 - further iterations on the edit format that GPT responds in. Currently it struggles a bit with indentation, but I'm sure that can be improved
-- a suite of example buggy files that we can test prompts on to ensure reliablity and measure improvement
+- a suite of example buggy files that we can test prompts on to ensure reliability and measure improvement
 - multiple files / codebases: send GPT everything that appears in the stacktrace
 - graceful handling of large files - should we just send GPT relevant classes / functions?
 - extension to languages other than python
