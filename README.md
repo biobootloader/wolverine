@@ -17,7 +17,7 @@ For a quick demonstration see my [demo video on twitter](https://twitter.com/bio
 
 Add your openAI api key to `.env`
 
-_warning!_ by default this uses GPT-4 and may make many repeated calls to the api.
+_warning!_ By default wolverine uses GPT-4 and may make many repeated calls to the api.
 
 ## Example Usage
 
