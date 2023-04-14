@@ -6,11 +6,11 @@ import shutil
 import subprocess
 import sys
 import openai
-
 from termcolor import cprint
 from dotenv import load_dotenv
 
 
+# Set up the OpenAI API
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
