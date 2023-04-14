@@ -15,7 +15,7 @@ For a quick demonstration see my [demo video on twitter](https://twitter.com/bio
     pip install -r requirements.txt
     cp .env.sample .env
 
-Add your openAI api key to `.env` 
+Add your openAI api key to `.env`
 
 _warning!_ By default wolverine uses GPT-4 and may make many repeated calls to the api.
 
@@ -28,6 +28,10 @@ To run with gpt-4 (the default, tested option):
 You can also run with other models, but be warned they may not adhere to the edit format as well:
 
     python wolverine.py --model=gpt-3.5-turbo buggy_script.py "subtract" 20 3
+
+If you want to use GPT-3.5 by default instead of GPT-4 uncomment the default model line in `.env`:
+
+    DEFAULT_MODEL=gpt-3.5-turbo
 
 ## Future Plans
 
