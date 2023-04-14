@@ -1,3 +1,6 @@
-venv
 openai_key.txt
 wolverine.log
+.venv
+.env
+env/
+.vscode/
