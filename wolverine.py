@@ -25,6 +25,17 @@ def run_script(script_name, script_args):
     return result.decode("utf-8"), 0
 
 
+def run_node(script_name, script_args):
+    script_args = [str(arg) for arg in script_args]
+    try:
+        result = subprocess.check_output(
+            ["node", script_name, *script_args], stderr=subprocess.STDOUT
+        )
+    except subprocess.CalledProcessError as e:
+        return e.output.decode("utf-8"), e.returncode
+    return result.decode("utf-8"), 0
+
+
 def send_error_to_gpt(file_path, args, error_message, model):
     with open(file_path, "r") as f:
         file_lines = f.readlines()
@@ -38,8 +49,7 @@ def send_error_to_gpt(file_path, args, error_message, model):
         initial_prompt_text = f.read()
 
     prompt = (
-        initial_prompt_text +
-        "\n\n"
+        initial_prompt_text + "\n\n"
         "Here is the script that needs fixing:\n\n"
         f"{file_with_lines}\n\n"
         "Here are the arguments it was provided:\n\n"
@@ -114,7 +124,7 @@ def apply_changes(file_path, changes_json):
             print(line, end="")
 
 
-def main(script_name, *script_args, revert=False, model="gpt-4"):
+def main(script_name, *script_args, revert=False, model="gpt-3.5-turbo"):
     if revert:
         backup_file = script_name + ".bak"
         if os.path.exists(backup_file):
@@ -129,7 +139,12 @@ def main(script_name, *script_args, revert=False, model="gpt-4"):
     shutil.copy(script_name, script_name + ".bak")
 
     while True:
-        output, returncode = run_script(script_name, script_args)
+        output = ""
+        returncode = 0
+        if script_name.endswith(".js"):
+            output, returncode = run_node(script_name, script_args)
+        else:
+            output, returncode = run_script(script_name, script_args)
 
         if returncode == 0:
             cprint("Script ran successfully.", "blue")
@@ -140,10 +155,10 @@ def main(script_name, *script_args, revert=False, model="gpt-4"):
             print("Output:", output)
 
             json_response = send_error_to_gpt(
-                    file_path=script_name,
-                    args=script_args,
-                    error_message=output,
-                    model=model,
+                file_path=script_name,
+                args=script_args,
+                error_message=output,
+                model=model,
             )
             apply_changes(script_name, json_response)
             cprint("Changes applied. Rerunning...", "blue")
