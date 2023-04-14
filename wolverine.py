@@ -108,6 +108,37 @@ def apply_changes(file_path, changes_json):
         print_diff(original_file_lines, file_lines)
     except Exception as e:
         raise Exception(f"Failed to apply changes: {str(e)}")
+    
+# Apply a single change suggested by GPT interactively
+def apply_change_interactive(file_path, change):
+    with open(file_path, "r") as f:
+        original_file_lines = f.readlines()
+
+    operation = change["operation"]
+    line = change["line"]
+    content = change["content"]
+
+    file_lines = original_file_lines.copy()
+    if operation == "Replace":
+        file_lines[line - 1] = content + "\n"
+    elif operation == "Delete":
+        del file_lines[line - 1]
+    elif operation == "InsertAfter":
+        file_lines.insert(line, content + "\n")
+
+    print("\nSuggested change:")
+    print_diff(original_file_lines, file_lines)
+
+    while True:
+        decision = input("Do you want to apply this change? (y/n): ").lower()
+        if decision == "y":
+            with open(file_path, "w") as f:
+                f.writelines(file_lines)
+            return True
+        elif decision == "n":
+            return False
+        else:
+            print("Invalid input. Please enter 'y' or 'n'.")
 
 # Print the differences between two file contents
 def print_diff(original_file_lines, file_lines):
@@ -120,7 +151,7 @@ def print_diff(original_file_lines, file_lines):
         else:
             print(line, end="")
 
-def main(script_name, *script_args, revert=False, model="gpt-4"):
+def main(script_name, *script_args, revert=False, model="gpt-4", interactive=False):
     openai.api_key = load_openai_key()
 
     if revert:
@@ -152,11 +183,25 @@ def main(script_name, *script_args, revert=False, model="gpt-4"):
                     error_message=output,
                     model=model,
             )
-            try:
-                apply_changes(script_name, json_response)
-                cprint("Changes applied. Rerunning...", "blue")
-            except Exception as e:
-                raise Exception(f"Failed to fix the script: {str(e)}")
+            if interactive:
+                changes = json.loads(json_response)
+                operation_changes = [change for change in changes if "operation" in change]
+                explanations = [
+                    change["explanation"] for change in changes if "explanation" in change
+                ]
+
+                for change in operation_changes:
+                    if apply_change_interactive(script_name, change):
+                        cprint("Change applied.", "green")
+                    else:
+                        cprint("Change rejected.", "red")
+                cprint("Finished applying changes. Rerunning...", "blue")
+            else:
+                try:
+                    apply_changes(script_name, json_response)
+                    cprint("Changes applied. Rerunning...", "blue")
+                except Exception as e:
+                    raise Exception(f"Failed to fix the script: {str(e)}")
 
 if __name__ == "__main__":
     try:
