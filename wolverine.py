@@ -5,13 +5,14 @@ import os
 import shutil
 import subprocess
 import sys
-
 import openai
 from termcolor import cprint
+from dotenv import load_dotenv
+
 
 # Set up the OpenAI API
-with open("openai_key.txt") as f:
-    openai.api_key = f.read().strip()
+load_dotenv()
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 
 def run_script(script_name, script_args):
@@ -51,7 +52,6 @@ def send_error_to_gpt(file_path, args, error_message, model):
     )
 
     # print(prompt)
-
     response = openai.ChatCompletion.create(
         model=model,
         messages=[
