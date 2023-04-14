@@ -60,7 +60,7 @@ def json_validated_response(model, messages):
     except (json.decoder.JSONDecodeError, ValueError) as e:
         cprint(f"{e}. Re-running the query.", "red")
         # debug
-        cprint(f"\n\GPT RESPONSE:\n\n{content}\n\n", "yellow")
+        cprint(f"\nGPT RESPONSE:\n\n{content}\n\n", "yellow")
         # append a user message that says the json is invalid
         messages.append(
             {
