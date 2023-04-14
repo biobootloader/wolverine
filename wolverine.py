@@ -94,16 +94,9 @@ def apply_changes(file_path, changes_json):
         elif operation == "InsertAfter":
             file_lines.insert(line, content + "\n")
 
-    with open(file_path, "w") as f:
-        f.writelines(file_lines)
+    # Ask for user confirmation before writing changes
+    print("\nChanges to be made:")
 
-    # Print explanations
-    cprint("Explanations:", "blue")
-    for explanation in explanations:
-        cprint(f"- {explanation}", "blue")
-
-    # Show the diff
-    print("\nChanges:")
     diff = difflib.unified_diff(original_file_lines, file_lines, lineterm="")
     for line in diff:
         if line.startswith("+"):
@@ -112,6 +105,36 @@ def apply_changes(file_path, changes_json):
             cprint(line, "red", end="")
         else:
             print(line, end="")
+
+    confirmation = input("Do you want to apply these changes? (y/n): ")
+    if confirmation.lower() == "y":
+        with open(file_path, "w") as f:
+            f.writelines(file_lines)
+
+        # Print explanations
+        cprint("Explanations:", "blue")
+        for explanation in explanations:
+            cprint(f"- {explanation}", "blue")
+
+        # Show the diff
+        print("\nChanges:")
+        diff = difflib.unified_diff(
+            original_file_lines, file_lines, lineterm="")
+        for line in diff:
+            if line.startswith("+"):
+                cprint(line, "green", end="")
+            elif line.startswith("-"):
+                cprint(line, "red", end="")
+            else:
+                print(line, end="")
+
+        print("Changes applied.")
+        # sys.exit(0)
+
+    # Ending the code once they hit n or N
+    else:
+        print("Changes not applied")
+        sys.exit(0)
 
 
 def main(script_name, *script_args, revert=False, model="gpt-4"):
@@ -140,10 +163,10 @@ def main(script_name, *script_args, revert=False, model="gpt-4"):
             print("Output:", output)
 
             json_response = send_error_to_gpt(
-                    file_path=script_name,
-                    args=script_args,
-                    error_message=output,
-                    model=model,
+                file_path=script_name,
+                args=script_args,
+                error_message=output,
+                model=model,
             )
             apply_changes(script_name, json_response)
             cprint("Changes applied. Rerunning...", "blue")
