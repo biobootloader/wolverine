@@ -108,16 +108,6 @@ def send_error_to_gpt(file_path, args, error_message, model=DEFAULT_MODEL):
             "content": prompt,
         },
     ]
-    messages = [
-        {
-            "role": "system",
-            "content": SYSTEM_PROMPT,
-        },
-        {
-            "role": "user",
-            "content": prompt,
-        },
-    ]
 
     return json_validated_response(model, messages)
 
