@@ -35,47 +35,49 @@ def run_script(script_name, script_args):
     return result.decode("utf-8"), 0
 
 
-def send_error_to_gpt(file_path, args, error_message, model=DEFAULT_MODEL):
-    def json_validated_response(model, messages):
-        """
-        This function is needed because the API can return a non-json response.
-        This will run recursively until a valid json response is returned.
-        """
-        response = openai.ChatCompletion.create(
-            model=model,
-            messages=messages,
-            temperature=0.5,
+def json_validated_response(model, messages):
+    """
+    This function is needed because the API can return a non-json response.
+    This will run recursively until a valid json response is returned.
+    todo: might want to stop after a certain number of retries
+    """
+    response = openai.ChatCompletion.create(
+        model=model,
+        messages=messages,
+        temperature=0.5,
+    )
+    messages.append(response.choices[0].message)
+    content = response.choices[0].message.content
+    # see if json can be parsed
+    try:
+        json_start_index = content.index(
+            "["
+        )  # find the starting position of the JSON data
+        json_data = content[
+            json_start_index:
+        ]  # extract the JSON data from the response string
+        json_response = json.loads(json_data)
+    except (json.decoder.JSONDecodeError, ValueError) as e:
+        cprint(f"{e}. Re-running the query.", "red")
+        # debug
+        cprint(f"\n\GPT RESPONSE:\n\n{content}\n\n", "yellow")
+        # append a user message that says the json is invalid
+        messages.append(
+            {
+                "role": "user",
+                "content": "Your response could not be parsed by json.loads. Please restate your last message as pure JSON.",
+            }
         )
-        messages.append(response.choices[0].message)
-        content = response.choices[0].message.content
-        # see if json can be parsed
-        try:
-            json_start_index = content.index(
-                "["
-            )  # find the starting position of the JSON data
-            json_data = content[
-                json_start_index:
-            ]  # extract the JSON data from the response string
-            json_response = json.loads(json_data)
-        except (json.decoder.JSONDecodeError, ValueError) as e:
-            cprint(f"{e}. Re-running the query.", "red")
-            # debug
-            cprint(f"\n\GPT RESPONSE:\n\n{content}\n\n", "yellow")
-            # append a user message that says the json is invalid
-            messages.append(
-                {
-                    "role": "user",
-                    "content": "Your response could not be parsed by json.loads. Please restate your last message as pure JSON.",
-                }
-            )
-            # rerun the api call
-            return json_validated_response(model, messages)
-        except Exception as e:
-            cprint(f"Unknown error: {e}", "red")
-            cprint(f"\n\GPT RESPONSE:\n\n{content}\n\n", "yellow")
-            raise e
-        return json_response
+        # rerun the api call
+        return json_validated_response(model, messages)
+    except Exception as e:
+        cprint(f"Unknown error: {e}", "red")
+        cprint(f"\nGPT RESPONSE:\n\n{content}\n\n", "yellow")
+        raise e
+    return json_response
 
+
+def send_error_to_gpt(file_path, args, error_message, model=DEFAULT_MODEL):
     with open(file_path, "r") as f:
         file_lines = f.readlines()
 
@@ -96,6 +98,16 @@ def send_error_to_gpt(file_path, args, error_message, model=DEFAULT_MODEL):
     )
 
     # print(prompt)
+    messages = [
+        {
+            "role": "system",
+            "content": SYSTEM_PROMPT,
+        },
+        {
+            "role": "user",
+            "content": prompt,
+        },
+    ]
     messages = [
         {
             "role": "system",
@@ -188,6 +200,7 @@ def main(script_name, *script_args, revert=False, model=DEFAULT_MODEL):
                 file_path=script_name,
                 args=script_args,
                 error_message=output,
+                model=model,
             )
 
             apply_changes(script_name, json_response)
