@@ -1,21 +1,18 @@
 import difflib
+import fire
 import json
 import os
 import shutil
 import subprocess
 import sys
+import openai
 
-import fire
-from dotenv import load_dotenv
 from termcolor import cprint
 from dotenv import load_dotenv
 
 
 load_dotenv()
-
-import openai
-
-openai.api_key = os.environ.get("OPENAI_API_KEY")
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 DEFAULT_MODEL = os.environ.get("DEFAULT_MODEL", "gpt-4")
 
