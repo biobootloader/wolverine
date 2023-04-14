@@ -1,2 +1,13 @@
+# Virtual environments
 venv
-openai_key.txt
+.env
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+
+# IDE files
+.idea/
+.vscode/
+
+# Miscellaneous
+.DS_Store

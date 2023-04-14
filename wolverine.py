@@ -5,13 +5,15 @@ import os
 import shutil
 import subprocess
 import sys
+from dotenv import load_dotenv
+from args import parser
 
 import openai
 from termcolor import cprint
 
 # Set up the OpenAI API
-with open("openai_key.txt") as f:
-    openai.api_key = f.read().strip()
+load_dotenv()
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 
 def run_script(script_name, script_args):
@@ -114,7 +116,13 @@ def apply_changes(file_path, changes_json):
             print(line, end="")
 
 
-def main(script_name, *script_args, revert=False, model="gpt-4"):
+def main():
+    args = parser.parse_args()
+    script_name = args.file
+    script_args = args.args
+    revert = args.revert
+    model = args.model
+    run_until_success = args.yes
     if revert:
         backup_file = script_name + ".bak"
         if os.path.exists(backup_file):
@@ -127,9 +135,18 @@ def main(script_name, *script_args, revert=False, model="gpt-4"):
 
     # Make a backup of the original script
     shutil.copy(script_name, script_name + ".bak")
+    run_first_time = False
 
     while True:
+        if run_first_time and not run_until_success:
+            cprint("Do you want to run the script again? [y/n]", "blue")
+            user_input = input()
+            while user_input.lower() != "y" and user_input.lower() != "n":
+                cprint("Incorrect entry. Please try again.", "red")
+            if user_input.lower() == "n":
+                break
         output, returncode = run_script(script_name, script_args)
+        run_first_time = True
 
         if returncode == 0:
             cprint("Script ran successfully.", "blue")
@@ -150,4 +167,4 @@ def main(script_name, *script_args, revert=False, model="gpt-4"):
 
 
 if __name__ == "__main__":
-    fire.Fire(main)
+    main()
