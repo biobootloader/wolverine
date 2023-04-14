@@ -36,3 +36,7 @@ This is just a quick prototype I threw together in a few hours. There are many p
 - multiple files / codebases: send GPT everything that appears in the stacktrace
 - graceful handling of large files - should we just send GPT relevant classes / functions?
 - extension to languages other than python
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=biobootloader/wolverine&type=Date)](https://star-history.com/#biobootloader/wolverine)
