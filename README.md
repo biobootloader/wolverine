@@ -27,7 +27,19 @@ To run with gpt-4 (the default, tested option):
 
 You can also run with other models, but be warned they may not adhere to the edit format as well:
 
-    python wolverine.py --model=gpt-3.5-turbo buggy_script.py "subtract" 20 3
+    python wolverine.py --model=gpt-3.5-turbo -f buggy_script.py "subtract" 20 3
+
+
+## Flags and their usage
+
+- To run with specific model, pass the `--model` or `-m` flag with model name
+- To pass the buggy script name, pass the `-f` or `--flag` flag with script name
+- To run the updated changes to the script till success, pass the `-y` or `--yes` flag
+- To revert the script to its original state, pass the `-r` or `--revert` flag
+
+## Sample full command
+    
+    python wolverine.py --model=gpt-3.5-turbo -f buggy_script.py -y "subtract" 20 3
 
 If you want to use GPT-3.5 by default instead of GPT-4 uncomment the default model line in `.env`:
 

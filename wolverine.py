@@ -5,9 +5,12 @@ import os
 import shutil
 import subprocess
 import sys
+
 import openai
 from termcolor import cprint
 from dotenv import load_dotenv
+
+from args import parser
 
 
 # Set up the OpenAI API
@@ -187,8 +190,13 @@ def apply_changes(file_path, changes: list, confirm=False):
 
     print("Changes applied.")
 
-
-def main(script_name, *script_args, revert=False, model=DEFAULT_MODEL, confirm=False):
+def main():
+    args = parser.parse_args()
+    script_name = args.file
+    script_args = args.args
+    revert = args.revert
+    model = args.model if args.model else DEFAULT_MODEL
+    run_until_success = args.yes
     if revert:
         backup_file = script_name + ".bak"
         if os.path.exists(backup_file):
@@ -201,9 +209,18 @@ def main(script_name, *script_args, revert=False, model=DEFAULT_MODEL, confirm=F
 
     # Make a backup of the original script
     shutil.copy(script_name, script_name + ".bak")
+    run_first_time = False
 
     while True:
+        if run_first_time and not run_until_success:
+            cprint("Do you want to run the script again? [y/n]", "blue")
+            user_input = input()
+            while user_input.lower() != "y" and user_input.lower() != "n":
+                cprint("Incorrect entry. Please try again.", "red")
+            if user_input.lower() == "n":
+                break
         output, returncode = run_script(script_name, script_args)
+        run_first_time = True
 
         if returncode == 0:
             cprint("Script ran successfully.", "blue")
@@ -225,4 +242,4 @@ def main(script_name, *script_args, revert=False, model=DEFAULT_MODEL, confirm=F
 
 
 if __name__ == "__main__":
-    fire.Fire(main)
+    main()

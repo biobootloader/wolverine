@@ -1,5 +1,13 @@
+# Virtual environments
 venv
-.venv
 .env
-env/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+
+# IDE files
+.idea/
 .vscode/
+
+# Miscellaneous
+.DS_Store
