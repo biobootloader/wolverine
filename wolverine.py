@@ -66,7 +66,8 @@ def send_error_to_gpt(file_path, args, error_message, model):
     return response.choices[0].message.content.strip()
 
 
-def apply_changes(file_path, changes_json):
+# Added the flag confirm. Once user use flag confirm then it will ask for confirmation before applying the changes.
+def apply_changes(file_path, changes_json, confirm=False):
     with open(file_path, "r") as f:
         original_file_lines = f.readlines()
 
@@ -106,38 +107,38 @@ def apply_changes(file_path, changes_json):
         else:
             print(line, end="")
 
-    confirmation = input("Do you want to apply these changes? (y/n): ")
-    if confirmation.lower() == "y":
-        with open(file_path, "w") as f:
-            f.writelines(file_lines)
+    # Checking if user used confirm flag
+    if confirm:
+        confirmation = input("Do you want to apply these changes? (y/n): ")
+        if confirmation.lower() != "y":
+            print("Changes not applied")
+            sys.exit(0)
 
-        # Print explanations
-        cprint("Explanations:", "blue")
-        for explanation in explanations:
-            cprint(f"- {explanation}", "blue")
+    with open(file_path, "w") as f:
+        f.writelines(file_lines)
 
-        # Show the diff
-        print("\nChanges:")
-        diff = difflib.unified_diff(
-            original_file_lines, file_lines, lineterm="")
-        for line in diff:
-            if line.startswith("+"):
-                cprint(line, "green", end="")
-            elif line.startswith("-"):
-                cprint(line, "red", end="")
-            else:
-                print(line, end="")
+    # Print explanations
+    cprint("Explanations:", "blue")
+    for explanation in explanations:
+        cprint(f"- {explanation}", "blue")
 
-        print("Changes applied.")
-        # sys.exit(0)
+    # Show the diff
+    print("\nChanges:")
+    diff = difflib.unified_diff(
+        original_file_lines, file_lines, lineterm="")
+    for line in diff:
+        if line.startswith("+"):
+            cprint(line, "green", end="")
+        elif line.startswith("-"):
+            cprint(line, "red", end="")
+        else:
+            print(line, end="")
 
-    # Ending the code once they hit n or N
-    else:
-        print("Changes not applied")
-        sys.exit(0)
+    print("Changes applied.")
 
 
-def main(script_name, *script_args, revert=False, model="gpt-4"):
+# Added the flag confirm. Once user use flag confirm then it will ask for confirmation before applying the changes.
+def main(script_name, *script_args, revert=False, model="gpt-4", confirm=False):
     if revert:
         backup_file = script_name + ".bak"
         if os.path.exists(backup_file):
@@ -168,7 +169,7 @@ def main(script_name, *script_args, revert=False, model="gpt-4"):
                 error_message=output,
                 model=model,
             )
-            apply_changes(script_name, json_response)
+            apply_changes(script_name, json_response, confirm=confirm)
             cprint("Changes applied. Rerunning...", "blue")
 
 

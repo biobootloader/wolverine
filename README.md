@@ -26,6 +26,10 @@ You can also run with other models, but be warned they may not adhere to the edi
 
     python wolverine.py --model=gpt-3.5-turbo buggy_script.py "subtract" 20 3
 
+You can also use flag `--confirm=True` which will ask you `yes or no` before making changes to the file. If flag is not used then it will apply the changes to the file
+
+    python wolverine.py buggy_script.py "subtract" 20 3 --confirm=True
+
 ## Future Plans
 
 This is just a quick prototype I threw together in a few hours. There are many possible extensions and contributions are welcome:
