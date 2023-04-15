@@ -1,8 +1,14 @@
-const subtractNumbers = (a, b) => a - b;
+const subtractNumbers = (a, b) => {
+  return a - b;
+};
 
-const multiplyNumbers = (a, b) => a * b;
+const multiplyNumbers = (a, b) => {
+  return a * b;
+};
 
-const divideNumbers = (a, b) => a / b;
+const divideNumbers = (a, b) => {
+  return a / b;
+};
 
 function calculate(operation, num1, num2) {
   let result = '';
