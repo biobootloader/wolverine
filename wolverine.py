@@ -23,10 +23,18 @@ with open("prompt.txt") as f:
 
 def run_script(script_name, script_args):
     script_args = [str(arg) for arg in script_args]
+    """
+    If script_name.endswith(".py") then run with python
+    else run with node
+    """
+    subprocess_args = (
+        [sys.executable, script_name, *script_args]
+        if script_name.endswith(".py")
+        else ["node", script_name, *script_args]
+    )
+
     try:
-        result = subprocess.check_output(
-            [sys.executable, script_name, *script_args], stderr=subprocess.STDOUT
-        )
+        result = subprocess.check_output(subprocess_args, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         return e.output.decode("utf-8"), e.returncode
     return result.decode("utf-8"), 0
