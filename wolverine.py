@@ -117,7 +117,7 @@ def send_error_to_gpt(file_path, args, error_message, model=DEFAULT_MODEL):
     return json_validated_response(model, messages)
 
 
-def apply_changes(file_path, changes: list):
+def apply_changes(file_path, changes: list, confirm=False):
     """
     Pass changes as loaded json (list of dicts)
     """
@@ -146,6 +146,25 @@ def apply_changes(file_path, changes: list):
         elif operation == "InsertAfter":
             file_lines.insert(line, content + "\n")
 
+    # Ask for user confirmation before writing changes
+    print("\nChanges to be made:")
+
+    diff = difflib.unified_diff(original_file_lines, file_lines, lineterm="")
+    for line in diff:
+        if line.startswith("+"):
+            cprint(line, "green", end="")
+        elif line.startswith("-"):
+            cprint(line, "red", end="")
+        else:
+            print(line, end="")
+
+    # Checking if user used confirm flag
+    if confirm:
+        confirmation = input("Do you want to apply these changes? (y/n): ")
+        if confirmation.lower() != "y":
+            print("Changes not applied")
+            sys.exit(0)
+
     with open(file_path, "w") as f:
         f.writelines(file_lines)
 
@@ -156,7 +175,8 @@ def apply_changes(file_path, changes: list):
 
     # Show the diff
     print("\nChanges:")
-    diff = difflib.unified_diff(original_file_lines, file_lines, lineterm="")
+    diff = difflib.unified_diff(
+        original_file_lines, file_lines, lineterm="")
     for line in diff:
         if line.startswith("+"):
             cprint(line, "green", end="")
@@ -165,8 +185,10 @@ def apply_changes(file_path, changes: list):
         else:
             print(line, end="")
 
+    print("Changes applied.")
 
-def main(script_name, *script_args, revert=False, model=DEFAULT_MODEL):
+
+def main(script_name, *script_args, revert=False, model=DEFAULT_MODEL, confirm=False):
     if revert:
         backup_file = script_name + ".bak"
         if os.path.exists(backup_file):
@@ -198,7 +220,7 @@ def main(script_name, *script_args, revert=False, model=DEFAULT_MODEL):
                 model=model,
             )
 
-            apply_changes(script_name, json_response)
+            apply_changes(script_name, json_response, confirm=confirm)
             cprint("Changes applied. Rerunning...", "blue")
 
 
