@@ -5,13 +5,20 @@ import os
 import shutil
 import subprocess
 import sys
-
 import openai
 from termcolor import cprint
+from dotenv import load_dotenv
+
 
 # Set up the OpenAI API
-with open("openai_key.txt") as f:
-    openai.api_key = f.read().strip()
+load_dotenv()
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+DEFAULT_MODEL = os.environ.get("DEFAULT_MODEL", "gpt-4")
+
+
+with open("prompt.txt") as f:
+    SYSTEM_PROMPT = f.read()
 
 
 def run_script(script_name, script_args):
@@ -25,18 +32,49 @@ def run_script(script_name, script_args):
     return result.decode("utf-8"), 0
 
 
-def run_node(script_name, script_args):
-    script_args = [str(arg) for arg in script_args]
+def json_validated_response(model, messages):
+    """
+    This function is needed because the API can return a non-json response.
+    This will run recursively until a valid json response is returned.
+    todo: might want to stop after a certain number of retries
+    """
+    response = openai.ChatCompletion.create(
+        model=model,
+        messages=messages,
+        temperature=0.5,
+    )
+    messages.append(response.choices[0].message)
+    content = response.choices[0].message.content
+    # see if json can be parsed
     try:
-        result = subprocess.check_output(
-            ["node", script_name, *script_args], stderr=subprocess.STDOUT
+        json_start_index = content.index(
+            "["
+        )  # find the starting position of the JSON data
+        json_data = content[
+            json_start_index:
+        ]  # extract the JSON data from the response string
+        json_response = json.loads(json_data)
+    except (json.decoder.JSONDecodeError, ValueError) as e:
+        cprint(f"{e}. Re-running the query.", "red")
+        # debug
+        cprint(f"\nGPT RESPONSE:\n\n{content}\n\n", "yellow")
+        # append a user message that says the json is invalid
+        messages.append(
+            {
+                "role": "user",
+                "content": "Your response could not be parsed by json.loads. Please restate your last message as pure JSON.",
+            }
         )
-    except subprocess.CalledProcessError as e:
-        return e.output.decode("utf-8"), e.returncode
-    return result.decode("utf-8"), 0
+        # rerun the api call
+        return json_validated_response(model, messages)
+    except Exception as e:
+        cprint(f"Unknown error: {e}", "red")
+        cprint(f"\nGPT RESPONSE:\n\n{content}\n\n", "yellow")
+        raise e
+    return json_response
 
 
-def send_error_to_gpt(file_path, args, error_message, model):
+def send_error_to_gpt(file_path, args, error_message, model=DEFAULT_MODEL):
     with open(file_path, "r") as f:
         file_lines = f.readlines()
 
@@ -45,11 +83,7 @@ def send_error_to_gpt(file_path, args, error_message, model):
         file_with_lines.append(str(i + 1) + ": " + line)
     file_with_lines = "".join(file_with_lines)
 
-    with open("prompt.txt") as f:
-        initial_prompt_text = f.read()
-
     prompt = (
-        initial_prompt_text + "\n\n"
         "Here is the script that needs fixing:\n\n"
         f"{file_with_lines}\n\n"
         "Here are the arguments it was provided:\n\n"
@@ -61,26 +95,26 @@ def send_error_to_gpt(file_path, args, error_message, model):
     )
 
     # print(prompt)
+    messages = [
+        {
+            "role": "system",
+            "content": SYSTEM_PROMPT,
+        },
+        {
+            "role": "user",
+            "content": prompt,
+        },
+    ]
 
-    response = openai.ChatCompletion.create(
-        model=model,
-        messages=[
-            {
-                "role": "user",
-                "content": prompt,
-            }
-        ],
-        temperature=1.0,
-    )
-
-    return response.choices[0].message.content.strip()
+    return json_validated_response(model, messages)
 
 
-def apply_changes(file_path, changes_json):
+def apply_changes(file_path, changes: list):
+    """
+    Pass changes as loaded json (list of dicts)
+    """
     with open(file_path, "r") as f:
         original_file_lines = f.readlines()
-
-    changes = json.loads(changes_json)
 
     # Filter out explanation elements
     operation_changes = [change for change in changes if "operation" in change]
@@ -124,7 +158,7 @@ def apply_changes(file_path, changes_json):
             print(line, end="")
 
 
-def main(script_name, *script_args, revert=False, model="gpt-3.5-turbo"):
+def main(script_name, *script_args, revert=False, model=DEFAULT_MODEL):
     if revert:
         backup_file = script_name + ".bak"
         if os.path.exists(backup_file):
@@ -160,6 +194,7 @@ def main(script_name, *script_args, revert=False, model="gpt-3.5-turbo"):
                 error_message=output,
                 model=model,
             )
+
             apply_changes(script_name, json_response)
             cprint("Changes applied. Rerunning...", "blue")
 
