@@ -17,6 +17,8 @@ For a quick demonstration see my [demo video on twitter](https://twitter.com/bio
 
 Add your openAI api key to `.env`
 
+_warning!_ By default wolverine uses GPT-4 and may make many repeated calls to the api.
+
 ## Example Usage
 
 To run with gpt-4 (the default, tested option):
@@ -39,6 +41,14 @@ You can also run with other models, but be warned they may not adhere to the edi
     
     python wolverine.py --model=gpt-3.5-turbo -f buggy_script.py -y "subtract" 20 3
 
+If you want to use GPT-3.5 by default instead of GPT-4 uncomment the default model line in `.env`:
+
+    DEFAULT_MODEL=gpt-3.5-turbo
+
+You can also use flag `--confirm=True` which will ask you `yes or no` before making changes to the file. If flag is not used then it will apply the changes to the file
+
+    python wolverine.py buggy_script.py "subtract" 20 3 --confirm=True
+
 ## Future Plans
 
 This is just a quick prototype I threw together in a few hours. There are many possible extensions and contributions are welcome:
@@ -49,3 +59,7 @@ This is just a quick prototype I threw together in a few hours. There are many p
 - multiple files / codebases: send GPT everything that appears in the stacktrace
 - graceful handling of large files - should we just send GPT relevant classes / functions?
 - extension to languages other than python
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=biobootloader/wolverine&type=Date)](https://star-history.com/#biobootloader/wolverine)

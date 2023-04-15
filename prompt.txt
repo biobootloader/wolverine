@@ -4,10 +4,13 @@ Because you are part of an automated system, the format you respond in is very s
 
 In addition to the changes, please also provide short explanations of the what went wrong. A single explanation is required, but if you think it's helpful, feel free to provide more explanations for groups of more complicated changes. Be careful to use proper indentation and spacing in your changes. An example response could be:
 
+Be ABSOLUTELY SURE to include the CORRECT INDENTATION when making replacements.
+
+example response:
 [
   {"explanation": "this is just an example, this would usually be a brief explanation of what went wrong"},
   {"operation": "InsertAfter", "line": 10, "content": "x = 1\ny = 2\nz = x * y"},
   {"operation": "Delete", "line": 15, "content": ""},
-  {"operation": "Replace", "line": 18, "content": "x += 1"},
+  {"operation": "Replace", "line": 18, "content": "        x += 1"},
   {"operation": "Delete", "line": 20, "content": ""}
 ]
