@@ -29,13 +29,13 @@ You can also run with other models, but be warned they may not adhere to the edi
 
     python wolverine.py --model=gpt-3.5-turbo buggy_script.py "subtract" 20 3
 
-You can also use flag `--confirm=True` which will ask you `yes or no` before making changes to the file. If flag is not used then it will apply the changes to the file
-
-    python wolverine.py buggy_script.py "subtract" 20 3 --confirm=True
-
 If you want to use GPT-3.5 by default instead of GPT-4 uncomment the default model line in `.env`:
 
     DEFAULT_MODEL=gpt-3.5-turbo
+
+You can also use flag `--confirm=True` which will ask you `yes or no` before making changes to the file. If flag is not used then it will apply the changes to the file
+
+    python wolverine.py buggy_script.py "subtract" 20 3 --confirm=True
 
 ## Future Plans
 

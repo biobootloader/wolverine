@@ -108,6 +108,8 @@ def send_error_to_gpt(file_path, args, error_message, model=DEFAULT_MODEL):
 
     return json_validated_response(model, messages)
 
+# Added the flag -confirm which will ask user before writing changes to file
+
 
 def apply_changes(file_path, changes: list, confirm=False):
     """
