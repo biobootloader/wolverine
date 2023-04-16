@@ -4,7 +4,7 @@
 
 [![Twitter](https://img.shields.io/twitter/url/https/twitter.com/bio_bootloader.svg?style=social&label=Follow%20%40bio_bootloader)](https://twitter.com/bio_bootloader) [![Downloads](https://static.pepy.tech/badge/wolverine/month)](https://pepy.tech/project/wolverine) 
 
-## 🤔 Why you need this?
+## 🤔 Why do you need this?
 
 Give your python scripts regenerative healing abilities!
 
