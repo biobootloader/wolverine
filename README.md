@@ -1,6 +1,7 @@
 # Wolverine
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT) 
+
 [![Twitter](https://img.shields.io/twitter/url/https/twitter.com/bio_bootloader.svg?style=social&label=Follow%20%40bio_bootloader)](https://twitter.com/bio_bootloader) [![Downloads](https://static.pepy.tech/badge/wolverine/month)](https://pepy.tech/project/wolverine) 
 
 ## 🤔 Why you need this?
@@ -10,7 +11,7 @@ Give your python scripts regenerative healing abilities!
 Run your scripts with Wolverine and when they crash, GPT-4 edits them and explains what went wrong. Even if you have many bugs it will repeatedly rerun until it's fixed.
 
 ## 🎬 Demonstration
-For a quick demonstration see my [demo video on twitter](https://twitter.com/bio_bootloader/status/1636880208304431104).
+For a quick demonstration see my [video on twitter](https://twitter.com/bio_bootloader/status/1636880208304431104).
 
 ## 🛠️ Setup
 
