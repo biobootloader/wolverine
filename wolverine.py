@@ -1,14 +1,14 @@
 import difflib
-import fire
 import json
 import os
 import shutil
 import subprocess
 import sys
-import openai
-from termcolor import cprint
-from dotenv import load_dotenv
 
+import fire
+import openai
+from dotenv import load_dotenv
+from termcolor import cprint
 
 # Set up the OpenAI API
 load_dotenv()
@@ -17,16 +17,16 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 DEFAULT_MODEL = os.environ.get("DEFAULT_MODEL", "gpt-4")
 
 
-with open("prompt.txt") as f:
-    SYSTEM_PROMPT = f.read()
+with open("prompt.txt", encoding="utf-8") as file:
+    SYSTEM_PROMPT = file.read()
 
 
 def run_script(script_name, script_args):
-    script_args = [str(arg) for arg in script_args]
     """
     If script_name.endswith(".py") then run with python
     else run with node
     """
+    script_args = [str(arg) for arg in script_args]
     subprocess_args = (
         [sys.executable, script_name, *script_args]
         if script_name.endswith(".py")
@@ -34,9 +34,12 @@ def run_script(script_name, script_args):
     )
 
     try:
-        result = subprocess.check_output(subprocess_args, stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError as e:
-        return e.output.decode("utf-8"), e.returncode
+        result = subprocess.check_output(
+            subprocess_args,
+            stderr=subprocess.STDOUT
+        )
+    except subprocess.CalledProcessError as error:
+        return error.output.decode("utf-8"), error.returncode
     return result.decode("utf-8"), 0
 
 
@@ -62,28 +65,29 @@ def json_validated_response(model, messages):
             json_start_index:
         ]  # extract the JSON data from the response string
         json_response = json.loads(json_data)
-    except (json.decoder.JSONDecodeError, ValueError) as e:
-        cprint(f"{e}. Re-running the query.", "red")
+    except (json.decoder.JSONDecodeError, ValueError) as error:
+        cprint(f"{error}. Re-running the query.", "red")
         # debug
         cprint(f"\nGPT RESPONSE:\n\n{content}\n\n", "yellow")
         # append a user message that says the json is invalid
         messages.append(
             {
                 "role": "user",
-                "content": "Your response could not be parsed by json.loads. Please restate your last message as pure JSON.",
+                "content": """Your response could not be parsed by json.loads.
+                              Please restate your last message as pure JSON.""",
             }
         )
         # rerun the api call
         return json_validated_response(model, messages)
-    except Exception as e:
-        cprint(f"Unknown error: {e}", "red")
+    except Exception as error:
+        cprint(f"Unknown error: {error}", "red")
         cprint(f"\nGPT RESPONSE:\n\n{content}\n\n", "yellow")
-        raise e
+        raise error
     return json_response
 
 
 def send_error_to_gpt(file_path, args, error_message, model=DEFAULT_MODEL):
-    with open(file_path, "r") as f:
+    with open(file_path) as f:
         file_lines = f.readlines()
 
     file_with_lines = []
@@ -121,7 +125,7 @@ def apply_changes(file_path, changes: list, confirm=False):
     """
     Pass changes as loaded json (list of dicts)
     """
-    with open(file_path, "r") as f:
+    with open(file_path) as f:
         original_file_lines = f.readlines()
 
     # Filter out explanation elements
