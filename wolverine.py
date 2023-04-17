@@ -10,6 +10,8 @@ from termcolor import cprint
 from dotenv import load_dotenv
 
 
+FOLDER = os.path.realpath(os.path.dirname(__file__))
+
 # Set up the OpenAI API
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -17,7 +19,7 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 DEFAULT_MODEL = os.environ.get("DEFAULT_MODEL", "gpt-4")
 
 
-with open("prompt.txt") as f:
+with open(os.path.join(FOLDER, "prompt.txt")) as f:
     SYSTEM_PROMPT = f.read()
 
 
