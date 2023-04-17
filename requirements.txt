@@ -20,4 +20,3 @@ termcolor==2.2.0
 tqdm==4.65.0
 urllib3==1.26.15
 yarl==1.8.2
-pytest==7.3.1
