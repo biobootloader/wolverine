@@ -21,7 +21,7 @@ DEFAULT_MODEL = os.environ.get("DEFAULT_MODEL", "gpt-4")
 VALIDATE_JSON_RETRY = int(os.getenv("VALIDATE_JSON_RETRY", -1))
 
 # Read the system prompt
-with open("prompt.txt") as f:
+with open(os.path.join(os.path.dirname(__file__), "..", "prompt.txt"), 'r') as f:
     SYSTEM_PROMPT = f.read()
 
 
