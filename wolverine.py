@@ -45,14 +45,14 @@ def run_script(script_name: str, script_args: List) -> str:
     return result.decode("utf-8"), 0
 
 
-def json_validated_response(model: str, messages: List[Dict], nb_retry: int = 0) -> Dict:
+def json_validated_response(model: str, messages: List[Dict], nb_retry: int = VALIDATE_JSON_RETRY) -> Dict:
     """
     This function is needed because the API can return a non-json response.
     This will run recursively VALIDATE_JSON_RETRY times.
     If VALIDATE_JSON_RETRY is -1, it will run recursively until a valid json response is returned.
     """
     json_response = {}
-    if VALIDATE_JSON_RETRY == -1 or nb_retry < VALIDATE_JSON_RETRY:
+    if nb_retry != 0:
         response = openai.ChatCompletion.create(
             model=model,
             messages=messages,
@@ -80,8 +80,8 @@ def json_validated_response(model: str, messages: List[Dict], nb_retry: int = 0)
                     "content": "Your response could not be parsed by json.loads. Please restate your last message as pure JSON.",
                 }
             )
-            # inc nb_retry
-            nb_retry+=1
+            # dec nb_retry
+            nb_retry-=1
             # rerun the api call
             return json_validated_response(model, messages, nb_retry)
         except Exception as e:
