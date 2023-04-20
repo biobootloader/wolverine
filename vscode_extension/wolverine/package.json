@@ -1,0 +1,79 @@
+{
+  "name": "wolverine",
+  "displayName": "wolverine",
+  "description": "A toolkit to help you interact with your editor using LLMs",
+  "repository": "https://github.com/biobootloader/wolverine",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.77.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "wolverine",
+      "properties": {
+        "wolverine.UNSAFE.OpenaiApiKeySetting": {
+          "type": "string",
+          "default": "",
+          "description": "OpenAI api key. You shouldn't paste your key in raw like this, unless you know what you're doing. Set a limit, vscode is a highly suspect environment, and your tokens might get pwn'd. Only do this if you're okay with someone naughty running away with your key!!\n\nIf only we had the weights running locally... emad...."
+        },
+        "wolverine.model": {
+          "type": "string",
+          "default": "",
+          "description": "model, openai only right now"
+        },
+        "wolverine.prompt": {
+          "type": "string",
+          "default": "",
+          "description": "The prompt. The selected text is immediately added after"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "wolverine.directedHeal",
+        "title": "Directed Heal"
+      }
+    ]
+  },
+  "scripts": {
+    "vsce": "vsce package",
+    "vscode:prepublish": "npm run esbuild-base -- --minify",
+    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node",
+    "esbuild": "npm run esbuild-base -- --sourcemap",
+    "esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
+    "test-compile": "tsc -p ./",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/glob": "^8.1.0",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "16.x",
+    "@types/vscode": "^1.77.0",
+    "@typescript-eslint/eslint-plugin": "^5.56.0",
+    "@typescript-eslint/parser": "^5.56.0",
+    "@vscode/test-electron": "^2.3.0",
+    "esbuild": "^0.17.17",
+    "eslint": "^8.36.0",
+    "glob": "^8.1.0",
+    "mocha": "^10.2.0",
+    "ts-loader": "^9.4.2",
+    "typescript": "^4.9.5",
+    "webpack": "^5.76.3",
+    "webpack-cli": "^5.0.1"
+  },
+  "dependencies": {
+    "axios": "^1.3.6",
+    "vsce": "^2.15.0"
+  }
+}
