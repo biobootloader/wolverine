@@ -20,7 +20,9 @@ def return_2():
   new_singleton = SingletonClass()
   singleton.a = 1
   new_singleton.a = 2
-  return singleton.a + singleton.a  
+  would_be_2 = (singleton.a + singleton.a)
+  assert would_be_2 == 2
+  return would_be_2
 
 if __name__=="__main__":
   fire.Fire()
