@@ -1,5 +1,9 @@
 import sys
 import fire
+"""
+Run With: `wolverine examples/buggy_script.py "subtract" 20 3`
+Purpose: Show self-regenerating fixing of subtraction operator
+"""
 
 def add_numbers(a, b):
     return a + b
