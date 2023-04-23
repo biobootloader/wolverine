@@ -5,26 +5,86 @@ import os
 import shutil
 import subprocess
 import sys
-
 import openai
 from termcolor import cprint
+from dotenv import load_dotenv
+
 
 # Set up the OpenAI API
-with open("openai_key.txt") as f:
-    openai.api_key = f.read().strip()
+load_dotenv()
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+DEFAULT_MODEL = os.environ.get("DEFAULT_MODEL", "gpt-4")
+
+
+with open("prompt.txt") as f:
+    SYSTEM_PROMPT = f.read()
 
 def run_script(script_name, script_args):
     script_args = [str(arg) for arg in script_args]
+    """
+    If script_name.endswith(".py") then run with python
+    else run with node
+    """
+    subprocess_args = (
+        [sys.executable, script_name, *script_args]
+        if script_name.endswith(".py")
+        else ["node", script_name, *script_args]
+    )
+
     try:
-        result = subprocess.check_output(
-            [sys.executable, script_name, *script_args], stderr=subprocess.STDOUT
-        )
+        result = subprocess.check_output(subprocess_args, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         return e.output.decode("utf-8"), e.returncode
     return result.decode("utf-8"), 0
 
 
-def send_error_to_gpt(file_path, args, error_message, model):
+def json_validated_response(model, messages):
+    """
+    This function is needed because the API can return a non-json response.
+    This will run recursively until a valid json response is returned.
+    todo: might want to stop after a certain number of retries
+    """
+    response = openai.ChatCompletion.create(
+        model=model,
+        messages=messages,
+        temperature=0.5,
+    )
+    messages.append(response.choices[0].message)
+    content = response.choices[0].message.content
+    # see if json can be parsed
+    try:
+        json_start_index = content.index(
+            "["
+        )  # find the starting position of the JSON data
+        json_data = content[
+            json_start_index:
+        ]  # extract the JSON data from the response string
+        json_response = json.loads(json_data)
+    except (json.decoder.JSONDecodeError, ValueError) as e:
+        cprint(f"{e}. Re-running the query.", "red")
+        # debug
+        cprint(f"\nGPT RESPONSE:\n\n{content}\n\n", "yellow")
+        # append a user message that says the json is invalid
+        messages.append(
+            {
+                "role": "user",
+                "content": (
+                    "Your response could not be parsed by json.loads. "
+                    "Please restate your last message as pure JSON."
+                ),
+            }
+        )
+        # rerun the api call
+        return json_validated_response(model, messages)
+    except Exception as e:
+        cprint(f"Unknown error: {e}", "red")
+        cprint(f"\nGPT RESPONSE:\n\n{content}\n\n", "yellow")
+        raise e
+    return json_response
+
+
+def send_error_to_gpt(file_path, args, error_message, model=DEFAULT_MODEL):
     with open(file_path, "r") as f:
         file_lines = f.readlines()
 
@@ -33,12 +93,7 @@ def send_error_to_gpt(file_path, args, error_message, model):
         file_with_lines.append(str(i + 1) + ": " + line)
     file_with_lines = "".join(file_with_lines)
 
-    with open("prompt.txt") as f:
-        initial_prompt_text = f.read()
-
     prompt = (
-        initial_prompt_text +
-        "\n\n"
         "Here is the script that needs fixing:\n\n"
         f"{file_with_lines}\n\n"
         "Here are the arguments it was provided:\n\n"
@@ -50,26 +105,26 @@ def send_error_to_gpt(file_path, args, error_message, model):
     )
 
     # print(prompt)
+    messages = [
+        {
+            "role": "system",
+            "content": SYSTEM_PROMPT,
+        },
+        {
+            "role": "user",
+            "content": prompt,
+        },
+    ]
 
-    response = openai.ChatCompletion.create(
-        model=model,
-        messages=[
-            {
-                "role": "user",
-                "content": prompt,
-            }
-        ],
-        temperature=1.0,
-    )
-
-    return response.choices[0].message.content.strip()
+    return json_validated_response(model, messages)
 
 
-def apply_changes(file_path, changes_json):
+def apply_changes(file_path, changes: list, confirm=False):
+    """
+    Pass changes as loaded json (list of dicts)
+    """
     with open(file_path, "r") as f:
         original_file_lines = f.readlines()
-
-    changes = json.loads(changes_json)
 
     # Filter out explanation elements
     operation_changes = [change for change in changes if "operation" in change]
@@ -93,16 +148,13 @@ def apply_changes(file_path, changes_json):
         elif operation == "InsertAfter":
             file_lines.insert(line, content + "\n")
 
-    with open(file_path, "w") as f:
-        f.writelines(file_lines)
-
     # Print explanations
     cprint("Explanations:", "blue")
     for explanation in explanations:
         cprint(f"- {explanation}", "blue")
 
-    # Show the diff
-    print("\nChanges:")
+    # Display changes diff
+    print("\nChanges to be made:")
     diff = difflib.unified_diff(original_file_lines, file_lines, lineterm="")
     for line in diff:
         if line.startswith("+"):
@@ -112,14 +164,30 @@ def apply_changes(file_path, changes_json):
         else:
             print(line, end="")
 
-def avaibility(openaiObj):
-    if "gpt-4" not in [x['id'] for x in openai.Model.list()['data']]:
-        model = "gpt-3.5-turbo"
-    else:
-        model = "gpt-4"
-    return model
+    if confirm:
+        # check if user wants to apply changes or exit
+        confirmation = input("Do you want to apply these changes? (y/n): ")
+        if confirmation.lower() != "y":
+            print("Changes not applied")
+            sys.exit(0)
 
-def main(script_name, *script_args, revert=False, model=avaibility(openai)):
+    with open(file_path, "w") as f:
+        f.writelines(file_lines)
+    print("Changes applied.")
+
+
+def check_model_availability(model):
+    available_models = [x['id'] for x in openai.Model.list()["data"]]
+    if model not in available_models:
+        print(
+            f"Model {model} is not available. Perhaps try running with "
+            "`--model=gpt-3.5-turbo` instead? You can also configure a "
+            "default model in the .env"
+        )
+        exit()
+
+
+def main(script_name, *script_args, revert=False, model=DEFAULT_MODEL, confirm=False):
     if revert:
         backup_file = script_name + ".bak"
         if os.path.exists(backup_file):
@@ -129,6 +197,9 @@ def main(script_name, *script_args, revert=False, model=avaibility(openai)):
         else:
             print(f"No backup file found for {script_name}")
             sys.exit(1)
+
+    # check if model is available
+    check_model_availability(model)
 
     # Make a backup of the original script
     shutil.copy(script_name, script_name + ".bak")
@@ -145,12 +216,13 @@ def main(script_name, *script_args, revert=False, model=avaibility(openai)):
             cprint("Script crashed. Trying to fix...", "blue")
             print("Output:", output)
             json_response = send_error_to_gpt(
-                    file_path=script_name,
-                    args=script_args,
-                    error_message=output,
-                    model=model,
+                file_path=script_name,
+                args=script_args,
+                error_message=output,
+                model=model,
             )
-            apply_changes(script_name, json_response)
+
+            apply_changes(script_name, json_response, confirm=confirm)
             cprint("Changes applied. Rerunning...", "blue")
 
 
