@@ -70,7 +70,10 @@ def json_validated_response(model, messages):
         messages.append(
             {
                 "role": "user",
-                "content": "Your response could not be parsed by json.loads. Please restate your last message as pure JSON.",
+                "content": (
+                    "Your response could not be parsed by json.loads. "
+                    "Please restate your last message as pure JSON."
+                ),
             }
         )
         # rerun the api call
@@ -146,9 +149,13 @@ def apply_changes(file_path, changes: list, confirm=False):
         elif operation == "InsertAfter":
             file_lines.insert(line, content + "\n")
 
-    # Ask for user confirmation before writing changes
-    print("\nChanges to be made:")
+    # Print explanations
+    cprint("Explanations:", "blue")
+    for explanation in explanations:
+        cprint(f"- {explanation}", "blue")
 
+    # Display changes diff
+    print("\nChanges to be made:")
     diff = difflib.unified_diff(original_file_lines, file_lines, lineterm="")
     for line in diff:
         if line.startswith("+"):
@@ -158,8 +165,8 @@ def apply_changes(file_path, changes: list, confirm=False):
         else:
             print(line, end="")
 
-    # Checking if user used confirm flag
     if confirm:
+        # check if user wants to apply changes or exit
         confirmation = input("Do you want to apply these changes? (y/n): ")
         if confirmation.lower() != "y":
             print("Changes not applied")
@@ -167,24 +174,6 @@ def apply_changes(file_path, changes: list, confirm=False):
 
     with open(file_path, "w") as f:
         f.writelines(file_lines)
-
-    # Print explanations
-    cprint("Explanations:", "blue")
-    for explanation in explanations:
-        cprint(f"- {explanation}", "blue")
-
-    # Show the diff
-    print("\nChanges:")
-    diff = difflib.unified_diff(
-        original_file_lines, file_lines, lineterm="")
-    for line in diff:
-        if line.startswith("+"):
-            cprint(line, "green", end="")
-        elif line.startswith("-"):
-            cprint(line, "red", end="")
-        else:
-            print(line, end="")
-
     print("Changes applied.")
 
 
