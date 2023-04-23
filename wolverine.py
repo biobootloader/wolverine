@@ -20,7 +20,6 @@ DEFAULT_MODEL = os.environ.get("DEFAULT_MODEL", "gpt-4")
 with open("prompt.txt") as f:
     SYSTEM_PROMPT = f.read()
 
-
 def run_script(script_name, script_args):
     script_args = [str(arg) for arg in script_args]
     """
@@ -177,6 +176,17 @@ def apply_changes(file_path, changes: list, confirm=False):
     print("Changes applied.")
 
 
+def check_model_availability(model):
+    available_models = [x['id'] for x in openai.Model.list()["data"]]
+    if model not in available_models:
+        print(
+            f"Model {model} is not available. Perhaps try running with "
+            "`--model=gpt-3.5-turbo` instead? You can also configure a "
+            "default model in the .env"
+        )
+        exit()
+
+
 def main(script_name, *script_args, revert=False, model=DEFAULT_MODEL, confirm=False):
     if revert:
         backup_file = script_name + ".bak"
@@ -188,6 +198,9 @@ def main(script_name, *script_args, revert=False, model=DEFAULT_MODEL, confirm=F
             print(f"No backup file found for {script_name}")
             sys.exit(1)
 
+    # check if model is available
+    check_model_availability(model)
+
     # Make a backup of the original script
     shutil.copy(script_name, script_name + ".bak")
 
@@ -198,10 +211,10 @@ def main(script_name, *script_args, revert=False, model=DEFAULT_MODEL, confirm=F
             cprint("Script ran successfully.", "blue")
             print("Output:", output)
             break
+
         else:
             cprint("Script crashed. Trying to fix...", "blue")
             print("Output:", output)
-
             json_response = send_error_to_gpt(
                 file_path=script_name,
                 args=script_args,
@@ -215,3 +228,4 @@ def main(script_name, *script_args, revert=False, model=DEFAULT_MODEL, confirm=F
 
 if __name__ == "__main__":
     fire.Fire(main)
+
