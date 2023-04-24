@@ -23,7 +23,7 @@ _warning!_ By default wolverine uses GPT-4 and may make many repeated calls to t
 
 To run with gpt-4 (the default, tested option):
 
-    python wolverine.py buggy_script.py "subtract" 20 3
+    python wolverine.py examples/buggy_script.py "subtract" 20 3
 
 You can also run with other models, but be warned they may not adhere to the edit format as well:
 
