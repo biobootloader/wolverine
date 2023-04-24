@@ -1,5 +1,4 @@
 import difflib
-import fire
 import json
 import os
 import shutil
@@ -19,6 +18,7 @@ DEFAULT_MODEL = os.environ.get("DEFAULT_MODEL", "gpt-4")
 
 with open("prompt.txt") as f:
     SYSTEM_PROMPT = f.read()
+
 
 def run_script(script_name, script_args):
     script_args = [str(arg) for arg in script_args]
@@ -224,8 +224,3 @@ def main(script_name, *script_args, revert=False, model=DEFAULT_MODEL, confirm=F
 
             apply_changes(script_name, json_response, confirm=confirm)
             cprint("Changes applied. Rerunning...", "blue")
-
-
-if __name__ == "__main__":
-    fire.Fire(main)
-
