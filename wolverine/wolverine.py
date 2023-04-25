@@ -68,6 +68,7 @@ def json_validated_response(model: str, messages: List[Dict], nb_retry: int = VA
                 json_start_index:
             ]  # extract the JSON data from the response string
             json_response = json.loads(json_data)
+            return json_response
         except (json.decoder.JSONDecodeError, ValueError) as e:
             cprint(f"{e}. Re-running the query.", "red")
             # debug
@@ -87,8 +88,7 @@ def json_validated_response(model: str, messages: List[Dict], nb_retry: int = VA
             cprint(f"Unknown error: {e}", "red")
             cprint(f"\nGPT RESPONSE:\n\n{content}\n\n", "yellow")
             raise e
-    # If not valid after VALIDATE_JSON_RETRY retries, return an empty object / or raise an exception and exit
-    return json_response
+    raise Exception(f"No valid json response found after {VALIDATE_JSON_RETRY} tries. Exiting.")
 
 
 def send_error_to_gpt(file_path: str, args: List, error_message: str, model: str = DEFAULT_MODEL) -> Dict:

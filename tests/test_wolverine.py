@@ -1,19 +1,15 @@
 import os
-import json
 import pytest
-import tempfile
-from wolverine import apply_changes, json_validated_response
+from wolverine import (
+    apply_changes,
+    json_validated_response,
+)
 
+from .conftest import (
+    mock_open_ai_response_object,
+    TEST_FILES_DIR
+)
 
-@pytest.fixture(scope='function')
-def temp_file():
-    # Create a temporary file
-    with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
-        f.write("first line\nsecond line\nthird line")
-    file_path = f.name
-    yield file_path
-    # Clean up the temporary file
-    os.remove(file_path)
 
 
 def test_apply_changes_replace(temp_file):
@@ -54,3 +50,40 @@ def test_apply_changes_insert(temp_file):
         content = f.read()
         assert content == 'first line\nsecond line\ninserted line\nthird line'
 
+
+@pytest.mark.parametrize("chat_completion_response, nb_retry, fail", [
+    (os.path.join(TEST_FILES_DIR, "cc_resp.txt"), 3, False),
+    (os.path.join(TEST_FILES_DIR, "cc_resp_fail.txt"), 3, True),
+    (os.path.join(TEST_FILES_DIR, "cc_resp_fail.txt"), 10, True),
+])
+def test_json_validated_response(mocker, chat_completion_response, nb_retry, fail):
+    # Open the test file
+    with open(chat_completion_response, 'r') as file:
+        response = file.read()
+    # Mock the openAi chat completion API call
+    mocker.patch(
+        "openai.ChatCompletion.create",
+        return_value=mock_open_ai_response_object(mocker=mocker, content=response))
+    # ChatCompletion returned an invalid response
+    if fail:
+        with pytest.raises(Exception) as err:
+            json_response = json_validated_response("gpt-4", [
+                    {
+                        "role": "user",
+                        "content": "prompt"
+                    }
+                ],
+                nb_retry=nb_retry
+            )
+            # Check that the exception is raised after nb_retry time
+            assert err.value == f"No valid json response found after 3 tries. Exiting."
+    else:
+        json_response = json_validated_response("gpt-4", [
+                {
+                    "role": "user",
+                    "content": "prompt"
+                }
+            ],
+            nb_retry=nb_retry
+        )
+        assert json_response
