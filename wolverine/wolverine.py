@@ -4,11 +4,13 @@ import os
 import shutil
 import subprocess
 import sys
+
 import openai
+
 from typing import List, Dict
 from termcolor import cprint
 from dotenv import load_dotenv
-
+from termcolor import cprint
 
 # Set up the OpenAI API
 load_dotenv()
@@ -26,11 +28,11 @@ with open(os.path.join(os.path.dirname(__file__), "..", "prompt.txt"), 'r') as f
 
 
 def run_script(script_name: str, script_args: List) -> str:
-    script_args = [str(arg) for arg in script_args]
     """
     If script_name.endswith(".py") then run with python
     else run with node
     """
+    script_args = [str(arg) for arg in script_args]
     subprocess_args = (
         [sys.executable, script_name, *script_args]
         if script_name.endswith(".py")
@@ -38,9 +40,12 @@ def run_script(script_name: str, script_args: List) -> str:
     )
 
     try:
-        result = subprocess.check_output(subprocess_args, stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError as e:
-        return e.output.decode("utf-8"), e.returncode
+        result = subprocess.check_output(
+            subprocess_args,
+            stderr=subprocess.STDOUT
+        )
+    except subprocess.CalledProcessError as error:
+        return error.output.decode("utf-8"), error.returncode
     return result.decode("utf-8"), 0
 
 
@@ -130,7 +135,7 @@ def apply_changes(file_path: str, changes: List, confirm: bool = False):
     """
     Pass changes as loaded json (list of dicts)
     """
-    with open(file_path, "r") as f:
+    with open(file_path) as f:
         original_file_lines = f.readlines()
 
     # Filter out explanation elements
