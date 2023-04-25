@@ -5,7 +5,6 @@ import shutil
 import subprocess
 import sys
 
-import fire
 import openai
 from dotenv import load_dotenv
 from termcolor import cprint
@@ -73,8 +72,10 @@ def json_validated_response(model, messages):
         messages.append(
             {
                 "role": "user",
-                "content": """Your response could not be parsed by json.loads.
-                              Please restate your last message as pure JSON.""",
+                "content": (
+                    "Your response could not be parsed by json.loads. "
+                    "Please restate your last message as pure JSON."
+                ),
             }
         )
         # rerun the api call
@@ -150,9 +151,13 @@ def apply_changes(file_path, changes: list, confirm=False):
         elif operation == "InsertAfter":
             file_lines.insert(line, content + "\n")
 
-    # Ask for user confirmation before writing changes
-    print("\nChanges to be made:")
+    # Print explanations
+    cprint("Explanations:", "blue")
+    for explanation in explanations:
+        cprint(f"- {explanation}", "blue")
 
+    # Display changes diff
+    print("\nChanges to be made:")
     diff = difflib.unified_diff(original_file_lines, file_lines, lineterm="")
     for line in diff:
         if line.startswith("+"):
@@ -162,8 +167,8 @@ def apply_changes(file_path, changes: list, confirm=False):
         else:
             print(line, end="")
 
-    # Checking if user used confirm flag
     if confirm:
+        # check if user wants to apply changes or exit
         confirmation = input("Do you want to apply these changes? (y/n): ")
         if confirmation.lower() != "y":
             print("Changes not applied")
@@ -171,25 +176,18 @@ def apply_changes(file_path, changes: list, confirm=False):
 
     with open(file_path, "w") as f:
         f.writelines(file_lines)
-
-    # Print explanations
-    cprint("Explanations:", "blue")
-    for explanation in explanations:
-        cprint(f"- {explanation}", "blue")
-
-    # Show the diff
-    print("\nChanges:")
-    diff = difflib.unified_diff(
-        original_file_lines, file_lines, lineterm="")
-    for line in diff:
-        if line.startswith("+"):
-            cprint(line, "green", end="")
-        elif line.startswith("-"):
-            cprint(line, "red", end="")
-        else:
-            print(line, end="")
-
     print("Changes applied.")
+
+
+def check_model_availability(model):
+    available_models = [x['id'] for x in openai.Model.list()["data"]]
+    if model not in available_models:
+        print(
+            f"Model {model} is not available. Perhaps try running with "
+            "`--model=gpt-3.5-turbo` instead? You can also configure a "
+            "default model in the .env"
+        )
+        exit()
 
 
 def main(script_name, *script_args, revert=False, model=DEFAULT_MODEL, confirm=False):
@@ -203,6 +201,9 @@ def main(script_name, *script_args, revert=False, model=DEFAULT_MODEL, confirm=F
             print(f"No backup file found for {script_name}")
             sys.exit(1)
 
+    # check if model is available
+    check_model_availability(model)
+
     # Make a backup of the original script
     shutil.copy(script_name, script_name + ".bak")
 
@@ -213,10 +214,10 @@ def main(script_name, *script_args, revert=False, model=DEFAULT_MODEL, confirm=F
             cprint("Script ran successfully.", "blue")
             print("Output:", output)
             break
+
         else:
             cprint("Script crashed. Trying to fix...", "blue")
             print("Output:", output)
-
             json_response = send_error_to_gpt(
                 file_path=script_name,
                 args=script_args,
@@ -226,7 +227,3 @@ def main(script_name, *script_args, revert=False, model=DEFAULT_MODEL, confirm=F
 
             apply_changes(script_name, json_response, confirm=confirm)
             cprint("Changes applied. Rerunning...", "blue")
-
-
-if __name__ == "__main__":
-    fire.Fire(main)
