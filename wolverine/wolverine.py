@@ -9,11 +9,51 @@ import openai
 from dotenv import load_dotenv
 from termcolor import cprint
 
-# Set up the OpenAI API
-load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+"""
+Relevants models, more can be added
+"""
+RELEVANT = ["gpt-3.5-turbo", "text-davinci-003", "text-davinci-002", "code-davinci-002"]
 
-DEFAULT_MODEL = os.environ.get("DEFAULT_MODEL", "gpt-4")
+
+def get_api_key():
+    """
+    Ask for the openAI key in command line if not set in .env
+    """
+    global DEFAULT_MODEL, AVAILABLE_MODELS
+    load_dotenv()
+    if (os.getenv("OPENAI_API_KEY") == "your-api-key-here"):
+        load_dotenv()
+        key = input("Paste your openAI API key, or put it in the .env file:\n->")
+        os.environ["OPENAI_API_KEY"] = key
+    openai.api_key = os.getenv("OPENAI_API_KEY")
+
+
+get_api_key()
+AVAILABLE_MODELS = [x['id'] for x in openai.Model.list()["data"]]
+DEFAULT_MODEL = os.environ.get("DEFAULT_MODEL", "gpt-4" if "gpt-4" in AVAILABLE_MODELS else "gpt-3.5-turbo")
+
+def check_model_availability(model):
+    if model not in AVAILABLE_MODELS:
+        print(f"Model {model} is not available.Please try with another model. You can also configure a " "default model in the .env")
+        return False
+    return True
+
+
+def model_choice(model):
+    """
+    Ask for which model to choose in command line
+    """
+    global DEFAULT_MODEL
+    models = [_ for _ in AVAILABLE_MODELS if _ in RELEVANT]
+    if (input(f"default model: {model}\nContinue? n to choose another model [y/n]") == 'n'):
+        while (1):
+            model_chose = input(f"Also available: {models}:\nWrite the model you want to chose ->")
+            DEFAULT_MODEL = model_chose
+            if (check_model_availability(DEFAULT_MODEL)):
+                print(f"Succesfully switched to {DEFAULT_MODEL}")
+                break
+
+model_choice(DEFAULT_MODEL)
 
 
 with open("prompt.txt", encoding="utf-8") as file:
@@ -177,17 +217,6 @@ def apply_changes(file_path, changes: list, confirm=False):
     with open(file_path, "w") as f:
         f.writelines(file_lines)
     print("Changes applied.")
-
-
-def check_model_availability(model):
-    available_models = [x['id'] for x in openai.Model.list()["data"]]
-    if model not in available_models:
-        print(
-            f"Model {model} is not available. Perhaps try running with "
-            "`--model=gpt-3.5-turbo` instead? You can also configure a "
-            "default model in the .env"
-        )
-        exit()
 
 
 def main(script_name, *script_args, revert=False, model=DEFAULT_MODEL, confirm=False):
