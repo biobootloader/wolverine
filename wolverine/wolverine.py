@@ -56,7 +56,7 @@ def model_choice(model):
 model_choice(DEFAULT_MODEL)
 
 
-with open("../prompt.txt", encoding="utf-8") as file:
+with open("prompt.txt", encoding="utf-8") as file:
     SYSTEM_PROMPT = file.read()
 
 
