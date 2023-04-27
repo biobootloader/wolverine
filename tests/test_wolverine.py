@@ -1,8 +1,7 @@
 import os
-import json
 import pytest
 import tempfile
-from wolverine import apply_changes, json_validated_response
+from wolverine import apply_changes
 
 
 @pytest.fixture(scope='function')
