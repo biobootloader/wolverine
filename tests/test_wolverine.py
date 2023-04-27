@@ -1,15 +1,12 @@
 import os
 import pytest
-from wolverine import (
-    apply_changes,
-    json_validated_response,
-)
+import tempfile
+from wolverine import apply_changes, json_validated_response
 
 from .conftest import (
     mock_open_ai_response_object,
     TEST_FILES_DIR
 )
-
 
 
 def test_apply_changes_replace(temp_file):
