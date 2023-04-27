@@ -37,6 +37,13 @@ You can also use flag `--confirm=True` which will ask you `yes or no` before mak
 
     python -m wolverine examples/buggy_script.py "subtract" 20 3 --confirm=True
 
+## :label: Environement variables
+| env name                       | description     | default value      |
+| -------------------------------| ----------------| -------------------|
+| OPENAI_API_KEY                   | OpenAI API key                                                       | None   |
+| DEFAULT_MODEL                   | GPT model to use                                                      | "gpt-4"   | 
+| VALIDATE_JSON_RETRY                   | Number of retries when requesting OpenAI API (-1 means unlimites)                                                       | -1   | 
+
 ## Future Plans
 
 This is just a quick prototype I threw together in a few hours. There are many possible extensions and contributions are welcome:

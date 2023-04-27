@@ -14,3 +14,5 @@ example response:
   {"operation": "Replace", "line": 18, "content": "        x += 1"},
   {"operation": "Delete", "line": 20, "content": ""}
 ]
+
+From now, your response must be only the json object, no talking, no comments.

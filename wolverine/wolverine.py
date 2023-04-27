@@ -6,6 +6,9 @@ import subprocess
 import sys
 
 import openai
+
+from typing import List, Dict
+from termcolor import cprint
 from dotenv import load_dotenv
 from termcolor import cprint
 
@@ -13,14 +16,18 @@ from termcolor import cprint
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
+# Default model is GPT-4
 DEFAULT_MODEL = os.environ.get("DEFAULT_MODEL", "gpt-4")
 
+# Nb retries for json_validated_response, default to -1, infinite
+VALIDATE_JSON_RETRY = int(os.getenv("VALIDATE_JSON_RETRY", -1))
 
-with open("prompt.txt", encoding="utf-8") as file:
-    SYSTEM_PROMPT = file.read()
+# Read the system prompt
+with open(os.path.join(os.path.dirname(__file__), "..", "prompt.txt"), 'r') as f:
+    SYSTEM_PROMPT = f.read()
 
 
-def run_script(script_name, script_args):
+def run_script(script_name: str, script_args: List) -> str:
     """
     If script_name.endswith(".py") then run with python
     else run with node
@@ -42,53 +49,55 @@ def run_script(script_name, script_args):
     return result.decode("utf-8"), 0
 
 
-def json_validated_response(model, messages):
+def json_validated_response(model: str, messages: List[Dict], nb_retry: int = VALIDATE_JSON_RETRY) -> Dict:
     """
     This function is needed because the API can return a non-json response.
-    This will run recursively until a valid json response is returned.
-    todo: might want to stop after a certain number of retries
+    This will run recursively VALIDATE_JSON_RETRY times.
+    If VALIDATE_JSON_RETRY is -1, it will run recursively until a valid json response is returned.
     """
-    response = openai.ChatCompletion.create(
-        model=model,
-        messages=messages,
-        temperature=0.5,
-    )
-    messages.append(response.choices[0].message)
-    content = response.choices[0].message.content
-    # see if json can be parsed
-    try:
-        json_start_index = content.index(
-            "["
-        )  # find the starting position of the JSON data
-        json_data = content[
-            json_start_index:
-        ]  # extract the JSON data from the response string
-        json_response = json.loads(json_data)
-    except (json.decoder.JSONDecodeError, ValueError) as error:
-        cprint(f"{error}. Re-running the query.", "red")
-        # debug
-        cprint(f"\nGPT RESPONSE:\n\n{content}\n\n", "yellow")
-        # append a user message that says the json is invalid
-        messages.append(
-            {
-                "role": "user",
-                "content": (
-                    "Your response could not be parsed by json.loads. "
-                    "Please restate your last message as pure JSON."
-                ),
-            }
+    json_response = {}
+    if nb_retry != 0:
+        response = openai.ChatCompletion.create(
+            model=model,
+            messages=messages,
+            temperature=0.5,
         )
-        # rerun the api call
-        return json_validated_response(model, messages)
-    except Exception as error:
-        cprint(f"Unknown error: {error}", "red")
-        cprint(f"\nGPT RESPONSE:\n\n{content}\n\n", "yellow")
-        raise error
-    return json_response
+        messages.append(response.choices[0].message)
+        content = response.choices[0].message.content
+        # see if json can be parsed
+        try:
+            json_start_index = content.index(
+                "["
+            )  # find the starting position of the JSON data
+            json_data = content[
+                json_start_index:
+            ]  # extract the JSON data from the response string
+            json_response = json.loads(json_data)
+            return json_response
+        except (json.decoder.JSONDecodeError, ValueError) as e:
+            cprint(f"{e}. Re-running the query.", "red")
+            # debug
+            cprint(f"\nGPT RESPONSE:\n\n{content}\n\n", "yellow")
+            # append a user message that says the json is invalid
+            messages.append(
+                {
+                    "role": "user",
+                    "content": "Your response could not be parsed by json.loads. Please restate your last message as pure JSON.",
+                }
+            )
+            # dec nb_retry
+            nb_retry-=1
+            # rerun the api call
+            return json_validated_response(model, messages, nb_retry)
+        except Exception as e:
+            cprint(f"Unknown error: {e}", "red")
+            cprint(f"\nGPT RESPONSE:\n\n{content}\n\n", "yellow")
+            raise e
+    raise Exception(f"No valid json response found after {VALIDATE_JSON_RETRY} tries. Exiting.")
 
 
-def send_error_to_gpt(file_path, args, error_message, model=DEFAULT_MODEL):
-    with open(file_path) as f:
+def send_error_to_gpt(file_path: str, args: List, error_message: str, model: str = DEFAULT_MODEL) -> Dict:
+    with open(file_path, "r") as f:
         file_lines = f.readlines()
 
     file_with_lines = []
@@ -122,7 +131,7 @@ def send_error_to_gpt(file_path, args, error_message, model=DEFAULT_MODEL):
     return json_validated_response(model, messages)
 
 
-def apply_changes(file_path, changes: list, confirm=False):
+def apply_changes(file_path: str, changes: List, confirm: bool = False):
     """
     Pass changes as loaded json (list of dicts)
     """

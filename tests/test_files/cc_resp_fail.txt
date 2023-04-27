@@ -1,0 +1,7 @@
+Explanation: The function `subtract_numbers` is never defined in the script, causing a `NameError` when it is called in the `calculate` function.
+
+[
+  {"explanation": "The 'subtract_numbers' function is never defined in the script."},
+  {"operation": "InsertAfter", "line": 12, "content": "\n# Define subtract_numbers function\ndef subtract_numbers(a, b):\n    return a - b\n"},
+  {"operation": "Replace", "line": 18, "content": "    if operation == \"add\":\n        result = add_numbers(num1, num2)\n    elif operation == \"subtract\":\n        result = subtract_numbers(num1, num2)\n    elif operation == \"multiply\":\n        result = multiply_numbers(num1, num2)\n    elif operation == \"divide\":\n        result = divide_numbers(num1, num2)\n    else:\n        print(\"Invalid operation\")\n"},
+  {"operation": "Replace", "line": 30, "content": "    return result\n"}
