@@ -1,6 +1,5 @@
 import os
 import pytest
-import tempfile
 from wolverine import apply_changes, json_validated_response
 
 from .conftest import (
@@ -73,7 +72,7 @@ def test_json_validated_response(mocker, chat_completion_response, nb_retry, fai
                 nb_retry=nb_retry
             )
             # Check that the exception is raised after nb_retry time
-            assert err.value == f"No valid json response found after 3 tries. Exiting."
+            assert err.value == "No valid json response found after 3 tries. Exiting."
     else:
         json_response = json_validated_response("gpt-4", [
                 {

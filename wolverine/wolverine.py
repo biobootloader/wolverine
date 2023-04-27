@@ -10,7 +10,6 @@ import openai
 from typing import List, Dict
 from termcolor import cprint
 from dotenv import load_dotenv
-from termcolor import cprint
 
 # Set up the OpenAI API
 load_dotenv()
@@ -23,7 +22,7 @@ DEFAULT_MODEL = os.environ.get("DEFAULT_MODEL", "gpt-4")
 VALIDATE_JSON_RETRY = int(os.getenv("VALIDATE_JSON_RETRY", -1))
 
 # Read the system prompt
-with open(os.path.join(os.path.dirname(__file__), "..", "prompt.txt"), 'r') as f:
+with open(os.path.join(os.path.dirname(__file__), "..", "prompt.txt"), "r") as f:
     SYSTEM_PROMPT = f.read()
 
 
@@ -40,20 +39,20 @@ def run_script(script_name: str, script_args: List) -> str:
     )
 
     try:
-        result = subprocess.check_output(
-            subprocess_args,
-            stderr=subprocess.STDOUT
-        )
+        result = subprocess.check_output(subprocess_args, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as error:
         return error.output.decode("utf-8"), error.returncode
     return result.decode("utf-8"), 0
 
 
-def json_validated_response(model: str, messages: List[Dict], nb_retry: int = VALIDATE_JSON_RETRY) -> Dict:
+def json_validated_response(
+    model: str, messages: List[Dict], nb_retry: int = VALIDATE_JSON_RETRY
+) -> Dict:
     """
     This function is needed because the API can return a non-json response.
     This will run recursively VALIDATE_JSON_RETRY times.
-    If VALIDATE_JSON_RETRY is -1, it will run recursively until a valid json response is returned.
+    If VALIDATE_JSON_RETRY is -1, it will run recursively until a valid json
+    response is returned.
     """
     json_response = {}
     if nb_retry != 0:
@@ -82,21 +81,28 @@ def json_validated_response(model: str, messages: List[Dict], nb_retry: int = VA
             messages.append(
                 {
                     "role": "user",
-                    "content": "Your response could not be parsed by json.loads. Please restate your last message as pure JSON.",
+                    "content": (
+                        "Your response could not be parsed by json.loads. "
+                        "Please restate your last message as pure JSON."
+                        ),
                 }
             )
             # dec nb_retry
-            nb_retry-=1
+            nb_retry -= 1
             # rerun the api call
             return json_validated_response(model, messages, nb_retry)
         except Exception as e:
             cprint(f"Unknown error: {e}", "red")
             cprint(f"\nGPT RESPONSE:\n\n{content}\n\n", "yellow")
             raise e
-    raise Exception(f"No valid json response found after {VALIDATE_JSON_RETRY} tries. Exiting.")
+    raise Exception(
+        f"No valid json response found after {VALIDATE_JSON_RETRY} tries. Exiting."
+    )
 
 
-def send_error_to_gpt(file_path: str, args: List, error_message: str, model: str = DEFAULT_MODEL) -> Dict:
+def send_error_to_gpt(
+    file_path: str, args: List, error_message: str, model: str = DEFAULT_MODEL
+) -> Dict:
     with open(file_path, "r") as f:
         file_lines = f.readlines()
 
@@ -189,7 +195,7 @@ def apply_changes(file_path: str, changes: List, confirm: bool = False):
 
 
 def check_model_availability(model):
-    available_models = [x['id'] for x in openai.Model.list()["data"]]
+    available_models = [x["id"] for x in openai.Model.list()["data"]]
     if model not in available_models:
         print(
             f"Model {model} is not available. Perhaps try running with "
