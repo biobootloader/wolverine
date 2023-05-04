@@ -3,3 +3,4 @@ venv
 .env
 env/
 .vscode/
+wolverine/GoLang/internal/main/.env
