@@ -43,7 +43,7 @@ You can also use flag `--confirm=True` which will ask you `yes or no` before mak
 | ------------------- | ----------------------------------------------------------------- | ------------- |
 | OPENAI_API_KEY      | OpenAI API key                                                    | None          |
 | DEFAULT_MODEL       | GPT model to use                                                  | "gpt-4"       |
-| VALIDATE_JSON_RETRY | Number of retries when requesting OpenAI API (-1 means unlimites) | -1            |
+| VALIDATE_JSON_RETRY | Number of retries when requesting OpenAI API (-1 means unlimited) | -1            |
 
 ## Future Plans
 
