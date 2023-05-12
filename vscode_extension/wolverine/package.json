@@ -36,7 +36,15 @@
     "commands": [
       {
         "command": "wolverine.directedHeal",
-        "title": "Directed Heal"
+        "title": "Directed Heal",
+        "key": "ctrl+k ctrl+h",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "wolverine.cancelOperation",
+        "title": "Cancel Current Buffer Updates",
+        "key": "escape",
+        "when": "wolverine.operationRunning"
       }
     ]
   },
