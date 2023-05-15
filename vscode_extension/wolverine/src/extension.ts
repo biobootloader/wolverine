@@ -13,7 +13,7 @@ import axios from 'axios';
 
 // Flush interval is 30 milliseconds, because that's what the author found works well on the author's system.
 // Ryzen 5900x + arch linux (btw)
-const FLUSH_INTERVAL_MS = 30;
+const FLUSH_INTERVAL_MS = 5;
 
 const countCharacters = (text: string) => text.replace(/\n/g, '').length;
 const countNewLines = (text: string) => text.match(/\n/g)?.length || 0;
@@ -59,7 +59,7 @@ const streamCompletion = async (prompt: string, onDataFunction: (chunk: any) => 
 	const data = {
 		'model': configurationModel || 'gpt-3.5-turbo',
 		'messages': messages,
-		'temperature': 0.9,
+		'temperature': 0.1,
 		'stream': true,
 	};
 	return new Promise(async (resolve, reject) => {
