@@ -71,8 +71,7 @@ def json_validated_response(
             json_data = content[
                 json_start_index:
             ]  # extract the JSON data from the response string
-            json_response = json.loads(json_data)
-            return json_response
+            return json.loads(json_data)
         except (json.decoder.JSONDecodeError, ValueError) as e:
             cprint(f"{e}. Re-running the query.", "red")
             # debug
@@ -106,9 +105,9 @@ def send_error_to_gpt(
     with open(file_path, "r") as f:
         file_lines = f.readlines()
 
-    file_with_lines = []
-    for i, line in enumerate(file_lines):
-        file_with_lines.append(str(i + 1) + ": " + line)
+    file_with_lines = [
+        f"{str(i + 1)}: {line}" for i, line in enumerate(file_lines)
+    ]
     file_with_lines = "".join(file_with_lines)
 
     prompt = (
@@ -207,7 +206,7 @@ def check_model_availability(model):
 
 def main(script_name, *script_args, revert=False, model=DEFAULT_MODEL, confirm=False):
     if revert:
-        backup_file = script_name + ".bak"
+        backup_file = f"{script_name}.bak"
         if os.path.exists(backup_file):
             shutil.copy(backup_file, script_name)
             print(f"Reverted changes to {script_name}")
@@ -220,7 +219,7 @@ def main(script_name, *script_args, revert=False, model=DEFAULT_MODEL, confirm=F
     check_model_availability(model)
 
     # Make a backup of the original script
-    shutil.copy(script_name, script_name + ".bak")
+    shutil.copy(script_name, f"{script_name}.bak")
 
     while True:
         output, returncode = run_script(script_name, script_args)
