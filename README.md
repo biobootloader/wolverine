@@ -1,6 +1,10 @@
 # Wolverine
 
-![output-onlinegiftools](https://github.com/biobootloader/wolverine/assets/5055400/cde545a6-6c63-45ee-9708-275e1ecf09a0)
+<p align="center">
+    
+<img alt="Self-healing polymers animation" src="https://github.com/biobootloader/wolverine/assets/5055400/cde545a6-6c63-45ee-9708-275e1ecf09a0" />
+
+</p>
 
 ## About
 
