@@ -1,5 +1,7 @@
 # Wolverine
 
+![output-onlinegiftools](https://github.com/biobootloader/wolverine/assets/5055400/cde545a6-6c63-45ee-9708-275e1ecf09a0)
+
 ## About
 
 Give your python scripts regenerative healing abilities!
@@ -43,7 +45,7 @@ You can also use flag `--confirm=True` which will ask you `yes or no` before mak
 | ------------------- | ----------------------------------------------------------------- | ------------- |
 | OPENAI_API_KEY      | OpenAI API key                                                    | None          |
 | DEFAULT_MODEL       | GPT model to use                                                  | "gpt-4"       |
-| VALIDATE_JSON_RETRY | Number of retries when requesting OpenAI API (-1 means unlimites) | -1            |
+| VALIDATE_JSON_RETRY | Number of retries when requesting OpenAI API (-1 means unlimited) | -1            |
 
 ## Future Plans
 
@@ -51,11 +53,15 @@ This is just a quick prototype I threw together in a few hours. There are many p
 
 - add flags to customize usage, such as asking for user confirmation before running changed code
 - further iterations on the edit format that GPT responds in. Currently it struggles a bit with indentation, but I'm sure that can be improved
-- a suite of example buggy files that we can test prompts on to ensure reliability and measure improvement
+- a suite of example buggy files that we can test prompts to ensure reliability and measure improvement
 - multiple files / codebases: send GPT everything that appears in the stacktrace
-- graceful handling of large files - should we just send GPT relevant classes / functions?
+- graceful handling of large files &mdash; sould we send GPT just the relevant classes / functions?
 - extension to languages other than python
 
 ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=biobootloader/wolverine&type=Date)](https://star-history.com/#biobootloader/wolverine)
+
+<sup>🌟Graph courtesy of [star-history.com](https://star-history.com/).</sup>
+
+<sup>Gif [fair-use](https://en.wikipedia.org/wiki/Fair_use) derivative of Rowan, SJ (2011) In: _Self-healing polymer fixes scratches._ https://youtu.be/h-fka0wfY8w. Accessed 1 Jun 2023 </sup>
