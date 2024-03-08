@@ -3,15 +3,20 @@
 
 # Wolverine
 
-## About
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT) 
+
+[![Twitter](https://img.shields.io/twitter/url/https/twitter.com/bio_bootloader.svg?style=social&label=Follow%20%40bio_bootloader)](https://twitter.com/bio_bootloader) [![Downloads](https://static.pepy.tech/badge/wolverine/month)](https://pepy.tech/project/wolverine) 
+
+## 🤔 Why do you need this?
 
 Give your python scripts regenerative healing abilities!
 
 Run your scripts with Wolverine and when they crash, GPT-4 edits them and explains what went wrong. Even if you have many bugs it will repeatedly rerun until it's fixed.
 
-For a quick demonstration see my [demo video on twitter](https://twitter.com/bio_bootloader/status/1636880208304431104).
+## 🎬 Demonstration
+For a quick demonstration see my [video on twitter](https://twitter.com/bio_bootloader/status/1636880208304431104).
 
-## Setup
+## 🛠️ Setup
 
     python3 -m venv venv
     source venv/bin/activate
@@ -20,9 +25,13 @@ For a quick demonstration see my [demo video on twitter](https://twitter.com/bio
 
 Add your openAI api key to `.env`
 
-_warning!_ By default wolverine uses GPT-4 and may make many repeated calls to the api.
+> :warning: **WARNING** GPT-4 token usage
+>
+> By default wolverine uses GPT-4 and may make many repeated calls to the api.
+>
+> :warning: **WARNING** GPT-4 token usage
 
-## Example Usage
+## 📝 Example Usage
 
 To run with gpt-4 (the default, tested option):
 
@@ -48,7 +57,7 @@ You can also use flag `--confirm=True` which will ask you `yes or no` before mak
 | DEFAULT_MODEL       | GPT model to use                                                  | "gpt-4"       |
 | VALIDATE_JSON_RETRY | Number of retries when requesting OpenAI API (-1 means unlimites) | -1            |
 
-## Future Plans
+## 🔮 Future Plans
 
 This is just a quick prototype I threw together in a few hours. There are many possible extensions and contributions are welcome:
 
@@ -59,6 +68,12 @@ This is just a quick prototype I threw together in a few hours. There are many p
 - graceful handling of large files - should we just send GPT relevant classes / functions?
 - extension to languages other than python
 
-## Star History
+## 🌟 History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=biobootloader/wolverine&type=Date)](https://star-history.com/#biobootloader/wolverine)
+
+## 💁 Contributing
+
+As an open source project in a rapidly developing field, I am open to contributions, whether it be in the form of a new feature, improved infra, or better documentation.
+
+For detailed information on how to [contribute](.github/CONTRIBUTING.md).
