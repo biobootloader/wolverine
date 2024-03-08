@@ -1,3 +1,6 @@
+# DEPRECATED: Try Mentat instead! https://github.com/AbanteAI/mentat
+
+
 # Wolverine
 
 ## About
