@@ -10,6 +10,7 @@ import openai
 from typing import List, Dict
 from termcolor import cprint
 from dotenv import load_dotenv
+import time
 
 # Set up the OpenAI API
 load_dotenv()
@@ -20,6 +21,9 @@ DEFAULT_MODEL = os.environ.get("DEFAULT_MODEL", "gpt-4")
 
 # Nb retries for json_validated_response, default to -1, infinite
 VALIDATE_JSON_RETRY = int(os.getenv("VALIDATE_JSON_RETRY", -1))
+
+# Interval for re-run script, default to 1 second
+RERUN_INTERVAL = int(os.getenv("RERUN_INTERVAL", 1))
 
 # Read the system prompt
 with open(os.path.join(os.path.dirname(__file__), "..", "prompt.txt"), "r") as f:
@@ -204,6 +208,15 @@ def check_model_availability(model):
         )
         exit()
 
+def countdown(seconds):
+    """
+    show a countdown counter
+    """
+    for i in range(seconds, 0, -1):
+        sys.stdout.write(f"\r{i} seconds left")
+        sys.stdout.flush()
+        time.sleep(1)
+    sys.stdout.write("\rDone!\n")
 
 def main(script_name, *script_args, revert=False, model=DEFAULT_MODEL, confirm=False):
     if revert:
@@ -222,16 +235,23 @@ def main(script_name, *script_args, revert=False, model=DEFAULT_MODEL, confirm=F
     # Make a backup of the original script
     shutil.copy(script_name, script_name + ".bak")
 
+    rounds_counter = 0
+
     while True:
         output, returncode = run_script(script_name, script_args)
 
         if returncode == 0:
             cprint("Script ran successfully.", "blue")
+            cprint(f"Run {rounds_counter} rounds", "yellow")
             print("Output:", output)
             break
 
         else:
             cprint("Script crashed. Trying to fix...", "blue")
+            # show rounds counter
+            rounds_counter += 1
+            cprint(f"Round {rounds_counter}", "yellow")
+
             print("Output:", output)
             json_response = send_error_to_gpt(
                 file_path=script_name,
@@ -242,3 +262,6 @@ def main(script_name, *script_args, revert=False, model=DEFAULT_MODEL, confirm=F
 
             apply_changes(script_name, json_response, confirm=confirm)
             cprint("Changes applied. Rerunning...", "blue")
+            # wait RERUN_INTERVAL seconds to run next round
+            countdown(RERUN_INTERVAL)
+
